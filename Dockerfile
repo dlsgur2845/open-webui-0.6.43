@@ -27,7 +27,7 @@ FROM --platform=$BUILDPLATFORM node:22-alpine3.20 AS build
 ARG BUILD_HASH
 
 # Set Node.js options (heap limit Allocation failed - JavaScript heap out of memory)
-# ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 WORKDIR /app
 
@@ -149,6 +149,9 @@ RUN pip3 install --no-cache-dir uv && \
     fi; \
     mkdir -p /app/backend/data && chown -R $UID:$GID /app/backend/data/ && \
     rm -rf /var/lib/apt/lists/*;
+
+# Install additional dependencies for documented parsing compatibility
+RUN pip3 install --no-cache-dir msoffcrypto-tool chardet nltk pyhwp
 
 # Install Ollama if requested
 RUN if [ "$USE_OLLAMA" = "true" ]; then \
