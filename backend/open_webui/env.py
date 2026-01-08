@@ -417,6 +417,8 @@ WEBUI_AUTH_TRUSTED_GROUPS_HEADER = os.environ.get(
     "WEBUI_AUTH_TRUSTED_GROUPS_HEADER", None
 )
 
+DISABLE_ADMIN = os.environ.get("DISABLE_ADMIN", "False").lower() == "true"
+
 
 ENABLE_PASSWORD_VALIDATION = (
     os.environ.get("ENABLE_PASSWORD_VALIDATION", "False").lower() == "true"

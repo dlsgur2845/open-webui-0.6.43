@@ -444,6 +444,7 @@ from open_webui.env import (
     AUDIT_EXCLUDED_PATHS,
     AUDIT_LOG_LEVEL,
     CHANGELOG,
+    DISABLE_ADMIN,
     REDIS_URL,
     REDIS_CLUSTER,
     REDIS_KEY_PREFIX,
@@ -1898,6 +1899,8 @@ async def get_app_config(request: Request):
             "enable_websocket": ENABLE_WEBSOCKET_SUPPORT,
             "enable_version_update_check": ENABLE_VERSION_UPDATE_CHECK,
             "enable_public_active_users_count": ENABLE_PUBLIC_ACTIVE_USERS_COUNT,
+            "enable_admin_export": ENABLE_ADMIN_EXPORT,
+            "disable_admin": DISABLE_ADMIN,
             **(
                 {
                     "enable_direct_connections": app.state.config.ENABLE_DIRECT_CONNECTIONS,
