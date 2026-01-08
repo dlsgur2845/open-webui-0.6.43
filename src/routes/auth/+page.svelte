@@ -41,7 +41,7 @@
 			console.log(sessionUser);
 			toast.success($i18n.t(`You're now logged in.`));
 			if (sessionUser.token) {
-				localStorage.token = sessionUser.token;
+				sessionStorage.token = sessionUser.token;
 			}
 			$socket.emit('user-join', { auth: { token: sessionUser.token } });
 			await user.set(sessionUser);
@@ -124,7 +124,7 @@
 			return;
 		}
 
-		localStorage.token = token;
+		sessionStorage.token = token;
 		await setSessionUser(sessionUser, localStorage.getItem('redirectPath') || null);
 	};
 

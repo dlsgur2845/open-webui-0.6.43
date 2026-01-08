@@ -339,6 +339,15 @@ async def get_current_user(
                     current_span.set_attribute("client.user.role", user.role)
                     current_span.set_attribute("client.auth.type", "jwt")
 
+                # Single Session Enforcement
+                from open_webui.models.auths import Auths
+                user_jti = Auths.get_user_token_jti_by_id(user.id)
+                if user_jti and data.get("jti") != user_jti:
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail=ERROR_MESSAGES.INVALID_TOKEN,
+                    )
+
                 # Refresh the user's last active timestamp asynchronously
                 # to prevent blocking the request
                 if background_tasks:

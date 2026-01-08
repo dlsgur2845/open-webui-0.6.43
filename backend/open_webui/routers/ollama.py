@@ -148,14 +148,15 @@ async def send_post_request(
                 res = await r.json()
                 await cleanup_response(r, session)
                 if "error" in res:
-                    raise HTTPException(status_code=r.status, detail=res["error"])
+                    log.error(f"Ollama Error: {res['error']}")
+                    raise HTTPException(status_code=r.status, detail="An error occurred. Please contact the administrator.")
             except HTTPException as e:
                 raise e  # Re-raise HTTPException to be handled by FastAPI
             except Exception as e:
                 log.error(f"Failed to parse error response: {e}")
                 raise HTTPException(
                     status_code=r.status,
-                    detail=f"Open WebUI: Server Connection Error",
+                    detail="An error occurred. Please contact the administrator.",
                 )
 
         r.raise_for_status()  # Raises an error for bad responses (4xx, 5xx)
@@ -181,10 +182,11 @@ async def send_post_request(
         raise e  # Re-raise HTTPException to be handled by FastAPI
     except Exception as e:
         detail = f"Ollama: {e}"
+        log.error(detail)
 
         raise HTTPException(
             status_code=r.status if r else 500,
-            detail=detail if e else "Open WebUI: Server Connection Error",
+            detail="An error occurred. Please contact the administrator.",
         )
     finally:
         if not stream:

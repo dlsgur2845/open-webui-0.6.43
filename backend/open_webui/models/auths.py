@@ -21,6 +21,7 @@ class Auth(Base):
     email = Column(String)
     password = Column(Text)
     active = Column(Boolean)
+    token_jti = Column(String, nullable=True)
 
 
 class AuthModel(BaseModel):
@@ -28,6 +29,7 @@ class AuthModel(BaseModel):
     email: str
     password: str
     active: bool = True
+    token_jti: Optional[str] = None
 
 
 ####################
@@ -143,7 +145,7 @@ class AuthsTable:
             user = Users.get_user_by_api_key(api_key)
             return user if user else None
         except Exception:
-            return False
+            return None
 
     def authenticate_user_by_email(self, email: str) -> Optional[UserModel]:
         log.info(f"authenticate_user_by_email: {email}")
@@ -191,6 +193,27 @@ class AuthsTable:
                     return False
         except Exception:
             return False
+
+
+
+    def update_user_token_jti_by_id(self, id: str, token_jti: str) -> bool:
+        try:
+            with get_db() as db:
+                result = (
+                    db.query(Auth).filter_by(id=id).update({"token_jti": token_jti})
+                )
+                db.commit()
+                return True if result == 1 else False
+        except Exception:
+            return False
+
+    def get_user_token_jti_by_id(self, id: str) -> Optional[str]:
+        try:
+            with get_db() as db:
+                auth = db.query(Auth).filter_by(id=id).first()
+                return auth.token_jti if auth else None
+        except Exception:
+            return None
 
 
 Auths = AuthsTable()

@@ -158,6 +158,59 @@ async def get_session_user(
         "permissions": user_permissions,
     }
 
+@router.post("/refresh", response_model=SessionUserResponse)
+async def refresh_session(
+    request: Request,
+    response: Response,
+    user=Depends(get_current_user)
+):
+    expires_delta = parse_duration(request.app.state.config.JWT_EXPIRES_IN)
+    expires_at = None
+    if expires_delta:
+        expires_at = int(time.time()) + int(expires_delta.total_seconds())
+
+    token = create_token(
+        data={"id": user.id},
+        expires_delta=expires_delta,
+    )
+
+    # Update JTI
+    decoded = decode_token(token)
+    if decoded and "jti" in decoded:
+        Auths.update_user_token_jti_by_id(user.id, decoded["jti"])
+
+    datetime_expires_at = (
+        datetime.datetime.fromtimestamp(expires_at, datetime.timezone.utc)
+        if expires_at
+        else None
+    )
+
+    # Set the cookie token
+    response.set_cookie(
+        key="token",
+        value=token,
+        expires=datetime_expires_at,
+        httponly=True,  # Ensures the cookie is not accessible via JavaScript
+        samesite=WEBUI_AUTH_COOKIE_SAME_SITE,
+        secure=WEBUI_AUTH_COOKIE_SECURE,
+    )
+
+    user_permissions = get_permissions(
+        user.id, request.app.state.config.USER_PERMISSIONS
+    )
+
+    return {
+        "token": token,
+        "token_type": "Bearer",
+        "expires_at": expires_at,
+        "id": user.id,
+        "email": user.email,
+        "name": user.name,
+        "role": user.role,
+        "profile_image_url": user.profile_image_url,
+        "permissions": user_permissions,
+    }
+
 
 ############################
 # Update Profile
@@ -447,6 +500,11 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
                     expires_delta=expires_delta,
                 )
 
+                # Update JTI
+                decoded = decode_token(token)
+                if decoded and "jti" in decoded:
+                    Auths.update_user_token_jti_by_id(user.id, decoded["jti"])
+
                 # Set the cookie token
                 response.set_cookie(
                     key="token",
@@ -599,6 +657,11 @@ async def signin(request: Request, response: Response, form_data: SigninForm):
             expires_delta=expires_delta,
         )
 
+        # Update JTI
+        decoded = decode_token(token)
+        if decoded and "jti" in decoded:
+            Auths.update_user_token_jti_by_id(user.id, decoded["jti"])
+
         datetime_expires_at = (
             datetime.datetime.fromtimestamp(expires_at, datetime.timezone.utc)
             if expires_at
@@ -694,6 +757,11 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
                 expires_delta=expires_delta,
             )
 
+            # Update JTI
+            decoded = decode_token(token)
+            if decoded and "jti" in decoded:
+                Auths.update_user_token_jti_by_id(user.id, decoded["jti"])
+
             datetime_expires_at = (
                 datetime.datetime.fromtimestamp(expires_at, datetime.timezone.utc)
                 if expires_at
@@ -767,6 +835,18 @@ async def signout(request: Request, response: Response):
 
     if token:
         await invalidate_token(request, token)
+        
+        # Clear JTI from DB
+        try:
+            data = decode_token(token)
+            if data and "id" in data:
+                # We do not verify if user is valid here, just try to clear JTI
+                # But we need user ID. decode_token returns data even if we don't authenticate against DB, 
+                # but decode_token in utils might fail if expired. 
+                # Assuming valid logout for active session.
+                Auths.update_user_token_jti_by_id(data["id"], None)
+        except Exception as e:
+            log.error(f"Error clearing JTI on signout: {e}")
 
     response.delete_cookie("token")
     response.delete_cookie("oui-session")

@@ -322,18 +322,9 @@ async def speech(request: Request, user=Depends(get_verified_user)):
         except Exception as e:
             log.exception(e)
 
-            detail = None
-            if r is not None:
-                try:
-                    res = r.json()
-                    if "error" in res:
-                        detail = f"External: {res['error']}"
-                except Exception:
-                    detail = f"External: {e}"
-
             raise HTTPException(
                 status_code=r.status_code if r else 500,
-                detail=detail if detail else "Open WebUI: Server Connection Error",
+                detail="An error occurred. Please contact the administrator.",
             )
 
     except ValueError:
@@ -958,10 +949,8 @@ async def generate_chat_completion(
                 response = await r.text()
 
             if r.status >= 400:
-                if isinstance(response, (dict, list)):
-                    return JSONResponse(status_code=r.status, content=response)
-                else:
-                    return PlainTextResponse(status_code=r.status, content=response)
+                log.error(f"OpenAI Error ({r.status}): {response}")
+                return JSONResponse(status_code=r.status, content={"detail": "An error occurred. Please contact the administrator."})
 
             return response
     except Exception as e:
@@ -969,7 +958,7 @@ async def generate_chat_completion(
 
         raise HTTPException(
             status_code=r.status if r else 500,
-            detail="Open WebUI: Server Connection Error",
+            detail="An error occurred. Please contact the administrator.",
         )
     finally:
         if not streaming:
@@ -1039,19 +1028,15 @@ async def embeddings(request: Request, form_data: dict, user):
                 response_data = await r.text()
 
             if r.status >= 400:
-                if isinstance(response_data, (dict, list)):
-                    return JSONResponse(status_code=r.status, content=response_data)
-                else:
-                    return PlainTextResponse(
-                        status_code=r.status, content=response_data
-                    )
+                log.error(f"OpenAI Error ({r.status}): {response_data}")
+                return JSONResponse(status_code=r.status, content={"detail": "An error occurred. Please contact the administrator."})
 
             return response_data
     except Exception as e:
         log.exception(e)
         raise HTTPException(
             status_code=r.status if r else 500,
-            detail="Open WebUI: Server Connection Error",
+            detail="An error occurred. Please contact the administrator.",
         )
     finally:
         if not streaming:
@@ -1131,12 +1116,8 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
                 response_data = await r.text()
 
             if r.status >= 400:
-                if isinstance(response_data, (dict, list)):
-                    return JSONResponse(status_code=r.status, content=response_data)
-                else:
-                    return PlainTextResponse(
-                        status_code=r.status, content=response_data
-                    )
+                log.error(f"OpenAI Error ({r.status}): {response_data}")
+                return JSONResponse(status_code=r.status, content={"detail": "An error occurred. Please contact the administrator."})
 
             return response_data
 
@@ -1144,7 +1125,7 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
         log.exception(e)
         raise HTTPException(
             status_code=r.status if r else 500,
-            detail="Open WebUI: Server Connection Error",
+            detail="An error occurred. Please contact the administrator.",
         )
     finally:
         if not streaming:

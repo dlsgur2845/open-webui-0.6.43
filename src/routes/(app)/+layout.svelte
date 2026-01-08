@@ -13,6 +13,7 @@
 	import { getTools } from '$lib/apis/tools';
 	import { getBanners } from '$lib/apis/configs';
 	import { getUserSettings } from '$lib/apis/users';
+	import { refreshSession } from '$lib/apis/auths';
 
 	import { WEBUI_VERSION } from '$lib/constants';
 	import { compareVersion } from '$lib/utils';
@@ -83,7 +84,7 @@
 	};
 
 	const setUserSettings = async (cb: () => Promise<void>) => {
-		let userSettings = await getUserSettings(localStorage.token).catch((error) => {
+		let userSettings = await getUserSettings(sessionStorage.token).catch((error) => {
 			console.error(error);
 			return null;
 		});
@@ -109,7 +110,7 @@
 	const setModels = async () => {
 		models.set(
 			await getModels(
-				localStorage.token,
+				sessionStorage.token,
 				$config?.features?.enable_direct_connections ? ($settings?.directConnections ?? null) : null
 			)
 		);
@@ -132,12 +133,12 @@
 	};
 
 	const setBanners = async () => {
-		const bannersData = await getBanners(localStorage.token);
+		const bannersData = await getBanners(sessionStorage.token);
 		banners.set(bannersData);
 	};
 
 	const setTools = async () => {
-		const toolsData = await getTools(localStorage.token);
+		const toolsData = await getTools(sessionStorage.token);
 		tools.set(toolsData);
 	};
 
@@ -286,19 +287,77 @@
 				checkForVersionUpdates();
 			}
 		}
+
+		// Activity Monitor & Token Refresh
+		let lastActive = Date.now();
+		const updateLastActive = () => {
+			lastActive = Date.now();
+		};
+
+		window.addEventListener('mousemove', updateLastActive);
+		window.addEventListener('keydown', updateLastActive);
+		window.addEventListener('click', updateLastActive);
+		window.addEventListener('scroll', updateLastActive);
+
+		// Refresh token every minute if active
+		const refreshInterval = setInterval(async () => {
+			if (Date.now() - lastActive < 60 * 1000) {
+				// User has been active in the last minute
+				if (sessionStorage.token) {
+					const res = await refreshSession(sessionStorage.token).catch((err) => null);
+					if (res && res.token) {
+						sessionStorage.token = res.token;
+						if (res.expires_at) {
+							// Update user store with new expiration
+							user.update((u) => ({ ...u, expires_at: res.expires_at }));
+						}
+					}
+				}
+			}
+		}, 60 * 1000);
+
+		// Countdown Timer
+		const timerInterval = setInterval(() => {
+			if ($user?.expires_at) {
+				const now = Math.floor(Date.now() / 1000);
+				const diff = $user.expires_at - now;
+				if (diff > 0) {
+					const m = Math.floor(diff / 60);
+					const s = diff % 60;
+					timeRemaining = `${m}m ${s}s`;
+				} else {
+					timeRemaining = 'Expired';
+					// Optional: force logout logic if strictly expired
+				}
+			} else {
+				timeRemaining = '';
+			}
+		}, 1000);
+
 		await tick();
 
 		loaded = true;
+
+		return () => {
+			window.removeEventListener('mousemove', updateLastActive);
+			window.removeEventListener('keydown', updateLastActive);
+			window.removeEventListener('click', updateLastActive);
+			window.removeEventListener('scroll', updateLastActive);
+			clearInterval(refreshInterval);
+			clearInterval(timerInterval);
+		};
 	});
 
 	const checkForVersionUpdates = async () => {
-		version = await getVersionUpdates(localStorage.token).catch((error) => {
+		version = await getVersionUpdates(sessionStorage.token).catch((error) => {
 			return {
 				current: WEBUI_VERSION,
 				latest: WEBUI_VERSION
 			};
 		});
 	};
+
+	let timeRemaining = '';
 </script>
 
 <SettingsModal bind:show={$showSettings} />
@@ -313,6 +372,14 @@
 				version = null;
 			}}
 		/>
+	</div>
+{/if}
+
+{#if timeRemaining}
+	<div
+		class="fixed top-2 right-2 z-[9999] text-xs font-mono bg-black/50 text-white px-2 py-1 rounded pointer-events-none"
+	>
+		{timeRemaining}
 	</div>
 {/if}
 
