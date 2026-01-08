@@ -91,7 +91,7 @@
 	};
 
 	const getKnowledgeItems = async () => {
-		const res = await searchKnowledgeBases(localStorage.token, query).catch(() => {
+		const res = await searchKnowledgeBases(sessionStorage.token, query).catch(() => {
 			return null;
 		});
 
@@ -106,7 +106,7 @@
 	};
 
 	const getKnowledgeFileItems = async () => {
-		const res = await searchKnowledgeFiles(localStorage.token, query).catch(() => {
+		const res = await searchKnowledgeFiles(sessionStorage.token, query).catch(() => {
 			return null;
 		});
 
@@ -124,7 +124,7 @@
 
 	onMount(async () => {
 		if ($folders === null) {
-			await folders.set(await getFolders(localStorage.token));
+			await folders.set(await getFolders(sessionStorage.token));
 		}
 
 		await tick();

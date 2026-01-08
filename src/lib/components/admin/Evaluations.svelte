@@ -34,7 +34,7 @@
 
 	onMount(async () => {
 		// TODO: feedbacks elo rating calculation should be done in the backend; remove below line later
-		feedbacks = await getAllFeedbacks(localStorage.token);
+		feedbacks = await getAllFeedbacks(sessionStorage.token);
 
 		loaded = true;
 

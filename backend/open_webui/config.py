@@ -312,7 +312,7 @@ API_KEYS_ALLOWED_ENDPOINTS = PersistentConfig(
 )
 
 JWT_EXPIRES_IN = PersistentConfig(
-    "JWT_EXPIRES_IN", "auth.jwt_expiry", os.environ.get("JWT_EXPIRES_IN", "4w")
+    "JWT_EXPIRES_IN", "auth.jwt_expiry", os.environ.get("JWT_EXPIRES_IN", "24h")
 )
 
 if JWT_EXPIRES_IN.value == "-1":

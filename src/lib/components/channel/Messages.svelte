@@ -138,7 +138,7 @@
 				onDelete={() => {
 					messages = messages.filter((m) => m.id !== message.id);
 
-					const res = deleteMessage(localStorage.token, message.channel_id, message.id).catch(
+					const res = deleteMessage(sessionStorage.token, message.channel_id, message.id).catch(
 						(error) => {
 							toast.error(`${error}`);
 							return null;
@@ -153,7 +153,7 @@
 						return m;
 					});
 
-					const res = updateMessage(localStorage.token, message.channel_id, message.id, {
+					const res = updateMessage(sessionStorage.token, message.channel_id, message.id, {
 						content: content
 					}).catch((error) => {
 						toast.error(`${error}`);
@@ -174,7 +174,7 @@
 					});
 
 					const updatedMessage = await pinMessage(
-						localStorage.token,
+						sessionStorage.token,
 						message.channel_id,
 						message.id,
 						message.is_pinned
@@ -210,7 +210,7 @@
 						});
 
 						const res = removeReaction(
-							localStorage.token,
+							sessionStorage.token,
 							message.channel_id,
 							message.id,
 							name
@@ -239,7 +239,7 @@
 							return m;
 						});
 
-						const res = addReaction(localStorage.token, message.channel_id, message.id, name).catch(
+						const res = addReaction(sessionStorage.token, message.channel_id, message.id, name).catch(
 							(error) => {
 								toast.error(`${error}`);
 								return null;

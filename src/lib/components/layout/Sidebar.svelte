@@ -102,7 +102,7 @@
 			return;
 		}
 
-		const folderList = await getFolders(localStorage.token).catch((error) => {
+		const folderList = await getFolders(sessionStorage.token).catch((error) => {
 			return [];
 		});
 		_folders.set(folderList.sort((a, b) => b.updated_at - a.updated_at));
@@ -173,7 +173,7 @@
 			}
 		};
 
-		const res = await createNewFolder(localStorage.token, {
+		const res = await createNewFolder(sessionStorage.token, {
 			name,
 			data
 		}).catch((error) => {
@@ -190,7 +190,7 @@
 
 	const initChannels = async () => {
 		// default (none), group, dm type
-		const res = await getChannels(localStorage.token).catch((error) => {
+		const res = await getChannels(sessionStorage.token).catch((error) => {
 			return null;
 		});
 
@@ -215,17 +215,17 @@
 		await Promise.all([
 			await (async () => {
 				console.log('Init tags');
-				const _tags = await getAllTags(localStorage.token);
+				const _tags = await getAllTags(sessionStorage.token);
 				tags.set(_tags);
 			})(),
 			await (async () => {
 				console.log('Init pinned chats');
-				const _pinnedChats = await getPinnedChatList(localStorage.token);
+				const _pinnedChats = await getPinnedChatList(sessionStorage.token);
 				pinnedChats.set(_pinnedChats);
 			})(),
 			await (async () => {
 				console.log('Init chat list');
-				const _chats = await getChatList(localStorage.token, $currentChatPage);
+				const _chats = await getChatList(sessionStorage.token, $currentChatPage);
 				await chats.set(_chats);
 			})()
 		]);
@@ -241,7 +241,7 @@
 
 		let newChatList = [];
 
-		newChatList = await getChatList(localStorage.token, $currentChatPage);
+		newChatList = await getChatList(sessionStorage.token, $currentChatPage);
 
 		// once the bottom of the list has been reached (no results) there is no need to continue querying
 		allChatsLoaded = newChatList.length === 0;
@@ -255,7 +255,7 @@
 		for (const item of items) {
 			console.log(item);
 			if (item.chat) {
-				await importChats(localStorage.token, [
+				await importChats(sessionStorage.token, [
 					{
 						chat: item.chat,
 						meta: item?.meta ?? {},
@@ -576,7 +576,7 @@
 			}
 		}
 
-		const res = await createNewChannel(localStorage.token, {
+		const res = await createNewChannel(sessionStorage.token, {
 			type: type,
 			name: name,
 			is_private: is_private,
@@ -1083,7 +1083,7 @@
 									return;
 								}
 
-								const res = await updateFolderParentIdById(localStorage.token, id, null).catch(
+								const res = await updateFolderParentIdById(sessionStorage.token, id, null).catch(
 									(error) => {
 										toast.error(`${error}`);
 										return null;
@@ -1133,11 +1133,11 @@
 						const { type, id, item } = e.detail;
 
 						if (type === 'chat') {
-							let chat = await getChatById(localStorage.token, id).catch((error) => {
+							let chat = await getChatById(sessionStorage.token, id).catch((error) => {
 								return null;
 							});
 							if (!chat && item) {
-								chat = await importChats(localStorage.token, [
+								chat = await importChats(sessionStorage.token, [
 									{
 										chat: item.chat,
 										meta: item?.meta ?? {},
@@ -1152,7 +1152,7 @@
 							if (chat) {
 								console.log(chat);
 								if (chat.folder_id) {
-									const res = await updateChatFolderIdById(localStorage.token, chat.id, null).catch(
+									const res = await updateChatFolderIdById(sessionStorage.token, chat.id, null).catch(
 										(error) => {
 											toast.error(`${error}`);
 											return null;
@@ -1163,7 +1163,7 @@
 								}
 
 								if (chat.pinned) {
-									const res = await toggleChatPinnedStatusById(localStorage.token, chat.id);
+									const res = await toggleChatPinnedStatusById(sessionStorage.token, chat.id);
 								}
 
 								initChatList();
@@ -1173,7 +1173,7 @@
 								return;
 							}
 
-							const res = await updateFolderParentIdById(localStorage.token, id, null).catch(
+							const res = await updateFolderParentIdById(sessionStorage.token, id, null).catch(
 								(error) => {
 									toast.error(`${error}`);
 									return null;
@@ -1199,11 +1199,11 @@
 										const { type, id, item } = e.detail;
 
 										if (type === 'chat') {
-											let chat = await getChatById(localStorage.token, id).catch((error) => {
+											let chat = await getChatById(sessionStorage.token, id).catch((error) => {
 												return null;
 											});
 											if (!chat && item) {
-												chat = await importChats(localStorage.token, [
+												chat = await importChats(sessionStorage.token, [
 													{
 														chat: item.chat,
 														meta: item?.meta ?? {},
@@ -1219,7 +1219,7 @@
 												console.log(chat);
 												if (chat.folder_id) {
 													const res = await updateChatFolderIdById(
-														localStorage.token,
+														sessionStorage.token,
 														chat.id,
 														null
 													).catch((error) => {
@@ -1229,7 +1229,7 @@
 												}
 
 												if (!chat.pinned) {
-													const res = await toggleChatPinnedStatusById(localStorage.token, chat.id);
+													const res = await toggleChatPinnedStatusById(sessionStorage.token, chat.id);
 												}
 
 												initChatList();

@@ -65,7 +65,7 @@
 
 	const getItemsPage = async () => {
 		itemsLoading = true;
-		const res = await searchKnowledgeBases(localStorage.token, query, viewOption, page).catch(
+		const res = await searchKnowledgeBases(sessionStorage.token, query, viewOption, page).catch(
 			() => {
 				return [];
 			}
@@ -94,7 +94,7 @@
 	};
 
 	const deleteHandler = async (item) => {
-		const res = await deleteKnowledgeById(localStorage.token, item.id).catch((e) => {
+		const res = await deleteKnowledgeById(sessionStorage.token, item.id).catch((e) => {
 			toast.error(`${e}`);
 		});
 

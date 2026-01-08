@@ -55,7 +55,7 @@
 	let showEditUserModal = false;
 
 	const deleteUserHandler = async (id) => {
-		const res = await deleteUserById(localStorage.token, id).catch((error) => {
+		const res = await deleteUserById(sessionStorage.token, id).catch((error) => {
 			toast.error(`${error}`);
 			return null;
 		});
@@ -81,7 +81,7 @@
 
 	const getUserList = async () => {
 		try {
-			const res = await getUsers(localStorage.token, query, orderBy, direction, page).catch(
+			const res = await getUsers(sessionStorage.token, query, orderBy, direction, page).catch(
 				(error) => {
 					toast.error(`${error}`);
 					return null;

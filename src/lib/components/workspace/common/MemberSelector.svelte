@@ -44,7 +44,7 @@
 
 	const getUserList = async () => {
 		try {
-			const res = await searchUsers(localStorage.token, query, orderBy, direction, page).catch(
+			const res = await searchUsers(sessionStorage.token, query, orderBy, direction, page).catch(
 				(error) => {
 					toast.error(`${error}`);
 					return null;
@@ -65,10 +65,10 @@
 	}
 
 	onMount(async () => {
-		groups = await getGroups(localStorage.token, true);
+		groups = await getGroups(sessionStorage.token, true);
 		if (userIds.length > 0) {
 			userIds.forEach(async (id) => {
-				const res = await getUserById(localStorage.token, id).catch((error) => {
+				const res = await getUserById(sessionStorage.token, id).catch((error) => {
 					console.error(error);
 					return null;
 				});

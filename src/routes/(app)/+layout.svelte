@@ -322,9 +322,8 @@
 				const now = Math.floor(Date.now() / 1000);
 				const diff = $user.expires_at - now;
 				if (diff > 0) {
-					const m = Math.floor(diff / 60);
-					const s = diff % 60;
-					timeRemaining = `${m}m ${s}s`;
+					const m = Math.ceil(diff / 60);
+					timeRemaining = `로그아웃 ${m}분 남음`;
 				} else {
 					timeRemaining = 'Expired';
 					// Optional: force logout logic if strictly expired
@@ -377,7 +376,7 @@
 
 {#if timeRemaining}
 	<div
-		class="fixed top-2 right-2 z-[9999] text-xs font-mono bg-black/50 text-white px-2 py-1 rounded pointer-events-none"
+		class="fixed top-4 right-36 z-[999] text-xs font-mono bg-black/50 text-white px-2 py-1 rounded pointer-events-none"
 	>
 		{timeRemaining}
 	</div>
