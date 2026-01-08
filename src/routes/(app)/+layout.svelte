@@ -13,7 +13,7 @@
 	import { getTools } from '$lib/apis/tools';
 	import { getBanners } from '$lib/apis/configs';
 	import { getUserSettings } from '$lib/apis/users';
-	import { refreshSession } from '$lib/apis/auths';
+	import { refreshSession, userSignOut } from '$lib/apis/auths';
 
 	import { WEBUI_VERSION } from '$lib/constants';
 	import { compareVersion } from '$lib/utils';
@@ -42,9 +42,19 @@
 	import SettingsModal from '$lib/components/chat/SettingsModal.svelte';
 	// import ChangelogModal from '$lib/components/ChangelogModal.svelte';
 	import AccountPending from '$lib/components/layout/Overlay/AccountPending.svelte';
+	import SessionTimeoutModal from '$lib/components/layout/Overlay/SessionTimeoutModal.svelte';
 	import UpdateInfoToast from '$lib/components/layout/UpdateInfoToast.svelte';
 	import Spinner from '$lib/components/common/Spinner.svelte';
+	import ArrowPath from '$lib/components/icons/ArrowPath.svelte';
 	import { Shortcut, shortcuts } from '$lib/shortcuts';
+
+	let showTimeoutModal = false;
+
+	// Activity Monitor & Token Refresh State
+	let lastActive = Date.now();
+	let lastRefresh = Date.now();
+	let clockSkew = 0;
+	let tokenDuration = 60 * 60; // Default 1 hour
 
 	const i18n = getContext('i18n');
 
@@ -140,6 +150,50 @@
 	const setTools = async () => {
 		const toolsData = await getTools(sessionStorage.token);
 		tools.set(toolsData);
+	};
+
+	// Helper functions defined at top-level
+	const updateLastActive = () => {
+		lastActive = Date.now();
+	};
+
+	const calculateClockSkew = (serverTimestamp: number) => {
+		if (serverTimestamp) {
+			const now = Math.floor(Date.now() / 1000);
+			clockSkew = now - serverTimestamp;
+			console.log('Clock skew:', clockSkew);
+		}
+	};
+
+	const refreshSessionHelper = async () => {
+		if (sessionStorage.token) {
+			try {
+				const res = await refreshSession(sessionStorage.token);
+				if (res && res.token) {
+					sessionStorage.token = res.token;
+					if (res.expires_at) {
+						user.update((u: any) => ({ ...u, expires_at: res.expires_at }));
+
+						if (res.server_timestamp) {
+							tokenDuration = res.expires_at - res.server_timestamp;
+						}
+					}
+					if (res.server_timestamp) {
+						calculateClockSkew(res.server_timestamp);
+					}
+					lastRefresh = Date.now();
+					showTimeoutModal = false;
+				}
+			} catch (err: any) {
+				console.error('Refresh failed:', err);
+				if (err?.status === 401) {
+					await localStorage.removeItem('token');
+					await sessionStorage.removeItem('token');
+					await user.set(null);
+					window.location.href = '/auth';
+				}
+			}
+		}
 	};
 
 	onMount(async () => {
@@ -259,10 +313,6 @@
 		};
 		setupKeyboardShortcuts();
 
-		// if ($user?.role === 'admin' && ($settings?.showChangelog ?? true)) {
-		// 	showChangelog.set($settings?.version !== $config.version);
-		// }
-
 		if ($user?.role === 'admin' || ($user?.permissions?.chat?.temporary ?? true)) {
 			if ($page.url.searchParams.get('temporary-chat') === 'true') {
 				temporaryChatEnabled.set(true);
@@ -288,48 +338,65 @@
 			}
 		}
 
-		// Activity Monitor & Token Refresh
-		let lastActive = Date.now();
-		const updateLastActive = () => {
-			lastActive = Date.now();
-		};
+		$: if ($config?.features?.jwt_expires_in) {
+			const configDuration = parseFloat($config.features.jwt_expires_in);
+			if (!isNaN(configDuration) && configDuration > 0) {
+				tokenDuration = configDuration;
+			}
+		}
 
 		window.addEventListener('mousemove', updateLastActive);
 		window.addEventListener('keydown', updateLastActive);
 		window.addEventListener('click', updateLastActive);
 		window.addEventListener('scroll', updateLastActive);
 
-		// Refresh token every minute if active
-		const refreshInterval = setInterval(async () => {
-			if (Date.now() - lastActive < 60 * 1000) {
-				// User has been active in the last minute
-				if (sessionStorage.token) {
-					const res = await refreshSession(sessionStorage.token).catch((err) => null);
-					if (res && res.token) {
-						sessionStorage.token = res.token;
-						if (res.expires_at) {
-							// Update user store with new expiration
-							user.update((u) => ({ ...u, expires_at: res.expires_at }));
-						}
+		// Integrated Timer & Auto Refresh (check every second)
+		const timerInterval = setInterval(async () => {
+			if ($user?.expires_at) {
+				// Use server time for calculation: now - clockSkew
+				const currentServerTime = Math.floor(Date.now() / 1000) - clockSkew;
+				const diff = $user.expires_at - currentServerTime;
+
+				// Logic: No Auto-Refresh. Show Modal if expiring.
+				const isVisible = document.visibilityState === 'visible';
+				// warningThreshold: When to show the modal
+				// If token duration > 60s, show at 60s remaining.
+				// If token duration <= 60s, show at 10s remaining.
+				const warningThreshold = tokenDuration > 60 ? 60 : 10;
+
+				if (diff <= 0) {
+					clearInterval(timerInterval);
+					await logoutHandler();
+					return;
+				}
+
+				if (diff <= warningThreshold) {
+					console.log(
+						`[Timer] Show Modal: diff=${diff}, threshold=${warningThreshold}, isVisible=${isVisible}, showing=${showTimeoutModal}`
+					);
+					if (isVisible && !showTimeoutModal) {
+						showTimeoutModal = true;
+					}
+				} else {
+					if (showTimeoutModal) {
+						showTimeoutModal = false;
 					}
 				}
-			}
-		}, 60 * 1000);
 
-		// Countdown Timer
-		const timerInterval = setInterval(() => {
-			if ($user?.expires_at) {
-				const now = Math.floor(Date.now() / 1000);
-				const diff = $user.expires_at - now;
+				modalCountdown = Math.max(0, diff);
+
 				if (diff > 0) {
-					const m = Math.ceil(diff / 60);
-					timeRemaining = `로그아웃 ${m}분 남음`;
+					const m = Math.floor(diff / 60);
+					const s = diff % 60;
+					timeRemaining = `로그아웃 ${m}분 ${s}초 남음`;
+					isExpiringSoon = diff < 60;
 				} else {
-					timeRemaining = 'Expired';
-					// Optional: force logout logic if strictly expired
+					timeRemaining = '만료됨';
+					isExpiringSoon = true;
 				}
 			} else {
 				timeRemaining = '';
+				isExpiringSoon = false;
 			}
 		}, 1000);
 
@@ -342,10 +409,38 @@
 			window.removeEventListener('keydown', updateLastActive);
 			window.removeEventListener('click', updateLastActive);
 			window.removeEventListener('scroll', updateLastActive);
-			clearInterval(refreshInterval);
 			clearInterval(timerInterval);
 		};
 	});
+
+	const logoutHandler = async () => {
+		let redirectUrl = '/auth';
+		try {
+			const res = await userSignOut();
+			if (res?.redirect_url) {
+				redirectUrl = res.redirect_url;
+			}
+		} catch (e) {
+			console.error(e);
+		}
+		// Fallback clearing just in case
+		await localStorage.removeItem('token');
+		await sessionStorage.removeItem('token');
+		await user.set(null);
+
+		// Force reload to clear state and ensure clean logout
+		window.location.href = redirectUrl;
+	};
+
+	let manualRefreshLoading = false;
+	const onManualRefresh = async () => {
+		if (manualRefreshLoading) return;
+		manualRefreshLoading = true;
+		await refreshSessionHelper();
+		setTimeout(() => {
+			manualRefreshLoading = false;
+		}, 10000); // 10s cooldown
+	};
 
 	const checkForVersionUpdates = async () => {
 		version = await getVersionUpdates(sessionStorage.token).catch((error) => {
@@ -357,6 +452,8 @@
 	};
 
 	let timeRemaining = '';
+	let isExpiringSoon = false;
+	let modalCountdown = 0;
 </script>
 
 <SettingsModal bind:show={$showSettings} />
@@ -376,9 +473,30 @@
 
 {#if timeRemaining}
 	<div
-		class="fixed top-4 right-36 z-[999] text-xs font-mono bg-black/50 text-white px-2 py-1 rounded pointer-events-none"
+		class="fixed top-4 right-36 z-[999] flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md shadow-sm border border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 transition-all duration-300"
 	>
-		{timeRemaining}
+		<div
+			class="text-xs font-mono font-medium tabular-nums transition-colors duration-300 {isExpiringSoon
+				? 'text-red-500 animate-pulse'
+				: 'text-gray-600 dark:text-gray-300'}"
+		>
+			{timeRemaining}
+		</div>
+
+		<button
+			class="p-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed group"
+			on:click={onManualRefresh}
+			disabled={manualRefreshLoading || timeRemaining === '만료됨'}
+			title="세션 연장 (10초 대기)"
+		>
+			<div
+				class={manualRefreshLoading
+					? 'animate-spin'
+					: 'group-hover:rotate-180 transition-transform duration-500'}
+			>
+				<ArrowPath className="size-3.5 text-gray-500 dark:text-gray-400" />
+			</div>
+		</button>
 	</div>
 {/if}
 
@@ -462,6 +580,15 @@
 		</div>
 	</div>
 {/if}
+
+<SessionTimeoutModal
+	bind:show={showTimeoutModal}
+	countdown={modalCountdown}
+	on:extend={async () => {
+		await refreshSessionHelper();
+	}}
+	on:logout={logoutHandler}
+/>
 
 <style>
 	.loading {

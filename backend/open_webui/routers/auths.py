@@ -93,6 +93,7 @@ signin_rate_limiter = RateLimiter(
 class SessionUserResponse(Token, UserProfileImageResponse):
     expires_at: Optional[int] = None
     permissions: Optional[dict] = None
+    server_timestamp: Optional[int] = None
 
 
 class SessionUserInfoResponse(SessionUserResponse, UserStatus):
@@ -155,7 +156,9 @@ async def get_session_user(
         "status_emoji": user.status_emoji,
         "status_message": user.status_message,
         "status_expires_at": user.status_expires_at,
+        "status_expires_at": user.status_expires_at,
         "permissions": user_permissions,
+        "server_timestamp": int(time.time()),
     }
 
 @router.post("/refresh", response_model=SessionUserResponse)
@@ -208,7 +211,9 @@ async def refresh_session(
         "name": user.name,
         "role": user.role,
         "profile_image_url": user.profile_image_url,
+        "profile_image_url": user.profile_image_url,
         "permissions": user_permissions,
+        "server_timestamp": int(time.time()),
     }
 
 
@@ -549,7 +554,9 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
                     "name": user.name,
                     "role": user.role,
                     "profile_image_url": user.profile_image_url,
+                    "profile_image_url": user.profile_image_url,
                     "permissions": user_permissions,
+                    "server_timestamp": int(time.time()),
                 }
             else:
                 raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
@@ -691,7 +698,10 @@ async def signin(request: Request, response: Response, form_data: SigninForm):
             "name": user.name,
             "role": user.role,
             "profile_image_url": user.profile_image_url,
+            "role": user.role,
+            "profile_image_url": user.profile_image_url,
             "permissions": user_permissions,
+            "server_timestamp": int(time.time()),
         }
     else:
         raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)

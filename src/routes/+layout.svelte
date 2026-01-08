@@ -150,7 +150,7 @@
 				// Emit user-join event with auth token
 				_socket.emit('user-join', { auth: { token: sessionStorage.token } });
 			} else {
-				console.warn('No token found in localStorage, user-join event not emitted');
+				console.warn('No token found in sessionStorage, user-join event not emitted');
 			}
 		});
 
@@ -581,7 +581,7 @@
 		}
 	};
 
-	const TOKEN_EXPIRY_BUFFER = 60; // seconds
+	const TOKEN_EXPIRY_BUFFER = 0; // seconds
 	const checkTokenExpiry = async () => {
 		const exp = $user?.expires_at; // token expiry time in unix timestamp
 		const now = Math.floor(Date.now() / 1000); // current time in unix timestamp
@@ -601,6 +601,40 @@
 	};
 
 	onMount(async () => {
+		// Global Fetch Interceptor for 401 Unauthorized handling
+		const originalFetch = window.fetch;
+		window.fetch = async (...args) => {
+			const response = await originalFetch(...args);
+
+			// Check if response is 401 Unauthorized
+			if (response.status === 401) {
+				const [url, options] = args;
+				// Check if the request had an Authorization header (meaning it was an authenticated request)
+				const hasAuthHeader =
+					(options?.headers &&
+						(options.headers['Authorization'] || options.headers['authorization'])) ||
+					(args[0] instanceof Request && args[0].headers.has('Authorization'));
+
+				if (hasAuthHeader) {
+					console.warn(
+						'Global 401 Interceptor: Unauthorized request detected. Redirecting to auth.'
+					);
+
+					// Clear tokens
+					if (localStorage.getItem('token')) localStorage.removeItem('token');
+					if (sessionStorage.getItem('token')) sessionStorage.removeItem('token');
+
+					// Force clean redirect to auth page
+					window.location.href = '/auth';
+
+					// Return a dummy response to prevent downstream errors while redirecting
+					return new Response(null, { status: 401 });
+				}
+			}
+
+			return response;
+		};
+
 		let touchstartY = 0;
 
 		function isNavOrDescendant(el) {
@@ -767,7 +801,8 @@
 					} else {
 						// Redirect Invalid Session User to /auth Page
 						localStorage.removeItem('token');
-						await goto(`/auth?redirect=${encodedUrl}`);
+						sessionStorage.removeItem('token');
+						window.location.href = `/auth?redirect=${encodedUrl}`;
 					}
 				} else {
 					// Don't redirect if we're already on the auth page
