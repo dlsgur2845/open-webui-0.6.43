@@ -438,6 +438,8 @@ from open_webui.config import (
     AUTOCOMPLETE_GENERATION_INPUT_MAX_LENGTH,
     AppConfig,
     reset_config,
+    CHAT_DELETE_ENABLED,
+    CHAT_DELETE_DAYS,
 )
 from open_webui.env import (
     ENABLE_CUSTOM_MODEL_FALLBACK,
@@ -604,6 +606,25 @@ async def lifespan(app: FastAPI):
         limiter.total_tokens = THREAD_POOL_SIZE
 
     asyncio.create_task(periodic_usage_pool_cleanup())
+
+    async def periodic_chat_deletion():
+        while True:
+            if app.state.config.CHAT_DELETE_ENABLED:
+                try:
+                    days = app.state.config.CHAT_DELETE_DAYS
+                    # log.info(f"Running periodic chat deletion for chats older than {days} days")
+                    count = await anyio.to_thread.run_sync(
+                        Chats.delete_chats_older_than, days
+                    )
+                    if count > 0:
+                        log.info(f"Deleted {count} old chats")
+                except Exception as e:
+                    log.error(f"Error in periodic chat deletion: {e}")
+            
+            # Check every hour
+            await asyncio.sleep(60 * 60)
+
+    asyncio.create_task(periodic_chat_deletion())
 
     if app.state.config.ENABLE_BASE_MODELS_CACHE:
         await get_all_models(
@@ -779,6 +800,9 @@ app.state.config.ENABLE_FOLDERS = ENABLE_FOLDERS
 app.state.config.ENABLE_CHANNELS = ENABLE_CHANNELS
 app.state.config.ENABLE_NOTES = ENABLE_NOTES
 app.state.config.ENABLE_COMMUNITY_SHARING = ENABLE_COMMUNITY_SHARING
+
+app.state.config.CHAT_DELETE_ENABLED = CHAT_DELETE_ENABLED
+app.state.config.CHAT_DELETE_DAYS = CHAT_DELETE_DAYS
 app.state.config.ENABLE_MESSAGE_RATING = ENABLE_MESSAGE_RATING
 app.state.config.ENABLE_USER_WEBHOOKS = ENABLE_USER_WEBHOOKS
 

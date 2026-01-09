@@ -1823,6 +1823,18 @@ ENABLE_FOLLOW_UP_GENERATION = PersistentConfig(
     os.environ.get("ENABLE_FOLLOW_UP_GENERATION", "True").lower() == "true",
 )
 
+CHAT_DELETE_ENABLED = PersistentConfig(
+    "CHAT_DELETE_ENABLED",
+    "chat.delete.enable",
+    os.environ.get("CHAT_DELETE_ENABLED", "False").lower() == "true",
+)
+
+CHAT_DELETE_DAYS = PersistentConfig(
+    "CHAT_DELETE_DAYS",
+    "chat.delete.days",
+    int(os.environ.get("CHAT_DELETE_DAYS", "365")),
+)
+
 ENABLE_TAGS_GENERATION = PersistentConfig(
     "ENABLE_TAGS_GENERATION",
     "task.tags.enable",

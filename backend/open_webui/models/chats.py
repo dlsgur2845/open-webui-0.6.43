@@ -1337,6 +1337,20 @@ class ChatTable:
         except Exception:
             return False
 
+    def delete_chats_older_than(self, days: int) -> int:
+        try:
+            with get_db() as db:
+                cutoff_time = int(time.time()) - (days * 24 * 60 * 60)
+                result = (
+                    db.query(Chat)
+                    .filter(Chat.updated_at < cutoff_time)
+                    .delete(synchronize_session=False)
+                )
+                db.commit()
+                return result
+        except Exception:
+            return 0
+
     def get_shared_chats_by_file_id(self, file_id: str) -> list[ChatModel]:
         with get_db() as db:
             # Join Chat and ChatFile tables to get shared chats associated with the file_id

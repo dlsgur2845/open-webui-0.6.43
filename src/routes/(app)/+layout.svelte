@@ -41,6 +41,7 @@
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
 	import SettingsModal from '$lib/components/chat/SettingsModal.svelte';
 	// import ChangelogModal from '$lib/components/ChangelogModal.svelte';
+	import AgreementModal from '$lib/components/AgreementModal.svelte';
 	import AccountPending from '$lib/components/layout/Overlay/AccountPending.svelte';
 	import SessionTimeoutModal from '$lib/components/layout/Overlay/SessionTimeoutModal.svelte';
 	import UpdateInfoToast from '$lib/components/layout/UpdateInfoToast.svelte';
@@ -49,6 +50,7 @@
 	import { Shortcut, shortcuts } from '$lib/shortcuts';
 
 	let showTimeoutModal = false;
+	let showAgreement = false;
 
 	// Activity Monitor & Token Refresh State
 	let lastActive = Date.now();
@@ -402,6 +404,10 @@
 
 		await tick();
 
+		if (!localStorage.getItem('agreedToTerms')) {
+			showAgreement = true;
+		}
+
 		loaded = true;
 
 		return () => {
@@ -458,6 +464,7 @@
 
 <SettingsModal bind:show={$showSettings} />
 <!-- <ChangelogModal bind:show={$showChangelog} /> -->
+<AgreementModal bind:show={showAgreement} />
 
 {#if version && compareVersion(version.latest, version.current) && ($settings?.showUpdateToast ?? true)}
 	<div class=" absolute bottom-8 right-8 z-50" in:fade={{ duration: 100 }}>
