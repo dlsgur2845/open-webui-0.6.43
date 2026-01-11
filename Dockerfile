@@ -28,7 +28,7 @@ FROM --platform=$BUILDPLATFORM node:22-alpine3.20 AS build
 ARG BUILD_HASH
 
 # Set Node.js options (heap limit Allocation failed - JavaScript heap out of memory)
-# ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 WORKDIR /app
 
@@ -134,7 +134,7 @@ RUN apt-get update && \
 # install python dependencies
 COPY --chown=$UID:$GID ./backend/requirements.txt ./requirements.txt
 
-RUN pip3 install --no-cache-dir uv && \
+RUN pip3 install --no-cache-dir uv msoffcrypto-tool chardet nltk pyhwp && \
     if [ "$USE_CUDA" = "true" ]; then \
     # If you use CUDA the whisper and embedding model will be downloaded on first use
     pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/$USE_CUDA_DOCKER_VER --no-cache-dir && \

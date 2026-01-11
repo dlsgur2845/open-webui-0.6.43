@@ -33,7 +33,7 @@
 	edit={true}
 	{onUpdate}
 	onSubmit={async ({ name, is_private, access_control, group_ids, user_ids }) => {
-		const res = await updateChannelById(localStorage.token, channel.id, {
+		const res = await updateChannelById(sessionStorage.token, channel.id, {
 			name,
 			is_private,
 			access_control,
@@ -199,7 +199,7 @@
 						})
 					);
 
-					await updateChannelMemberActiveStatusById(localStorage.token, channel.id, false).catch(
+					await updateChannelMemberActiveStatusById(sessionStorage.token, channel.id, false).catch(
 						(error) => {
 							toast.error(`${error}`);
 						}

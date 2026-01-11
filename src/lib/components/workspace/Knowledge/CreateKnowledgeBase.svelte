@@ -29,7 +29,7 @@
 		}
 
 		const res = await createNewKnowledge(
-			localStorage.token,
+			sessionStorage.token,
 			name,
 			description,
 			accessControl

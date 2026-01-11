@@ -95,6 +95,10 @@ WEBUI_FAVICON_URL = "https://openwebui.com/favicon.png"
 
 TRUSTED_SIGNATURE_KEY = os.environ.get("TRUSTED_SIGNATURE_KEY", "")
 
+DISABLE_ADMIN = os.environ.get("DISABLE_ADMIN", "False").lower() == "true"
+CHAT_DELETE_ENABLED = os.environ.get("CHAT_DELETE_ENABLED", "False").lower() == "true"
+CHAT_DELETE_DAYS = int(os.environ.get("CHAT_DELETE_DAYS", "365"))
+
 ####################################
 # ENV (dev,test,prod)
 ####################################

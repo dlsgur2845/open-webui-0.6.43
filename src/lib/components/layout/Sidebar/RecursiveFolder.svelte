@@ -137,12 +137,14 @@
 									return;
 								}
 								// Move the folder
-								const res = await updateFolderParentIdById(localStorage.token, id, folderId).catch(
-									(error) => {
-										toast.error(`${error}`);
-										return null;
-									}
-								);
+								const res = await updateFolderParentIdById(
+									sessionStorage.token,
+									id,
+									folderId
+								).catch((error) => {
+									toast.error(`${error}`);
+									return null;
+								});
 
 								if (res) {
 									dispatch('update');
@@ -150,11 +152,11 @@
 							} else if (type === 'chat') {
 								open = true;
 
-								let chat = await getChatById(localStorage.token, id).catch((error) => {
+								let chat = await getChatById(sessionStorage.token, id).catch((error) => {
 									return null;
 								});
 								if (!chat && item) {
-									chat = await importChats(localStorage.token, [
+									chat = await importChats(sessionStorage.token, [
 										{
 											chat: item.chat,
 											meta: item?.meta ?? {},
@@ -171,7 +173,7 @@
 
 								// Move the chat
 								const res = await updateChatFolderIdById(
-									localStorage.token,
+									sessionStorage.token,
 									chat.id,
 									folderId
 								).catch((error) => {
@@ -290,7 +292,7 @@
 	let showDeleteConfirm = false;
 
 	const deleteHandler = async () => {
-		const res = await deleteFolderById(localStorage.token, folderId, deleteFolderContents).catch(
+		const res = await deleteFolderById(sessionStorage.token, folderId, deleteFolderContents).catch(
 			(error) => {
 				toast.error(`${error}`);
 				return null;
@@ -314,7 +316,7 @@
 		name = name.trim();
 		folders[folderId].name = name;
 
-		const res = await updateFolderById(localStorage.token, folderId, {
+		const res = await updateFolderById(sessionStorage.token, folderId, {
 			name,
 			...(meta ? { meta } : {}),
 			...(data ? { data } : {})
@@ -335,7 +337,7 @@
 			toast.success($i18n.t('Folder updated successfully'));
 
 			if ($selectedFolder?.id === folderId) {
-				const folder = await getFolderById(localStorage.token, folderId).catch((error) => {
+				const folder = await getFolderById(sessionStorage.token, folderId).catch((error) => {
 					toast.error(`${error}`);
 					return null;
 				});
@@ -349,7 +351,7 @@
 	};
 
 	const isExpandedUpdateHandler = async () => {
-		const res = await updateFolderIsExpandedById(localStorage.token, folderId, open).catch(
+		const res = await updateFolderIsExpandedById(sessionStorage.token, folderId, open).catch(
 			(error) => {
 				toast.error(`${error}`);
 				return null;
@@ -370,7 +372,7 @@
 	export const setFolderItems = async () => {
 		await tick();
 		if (open) {
-			chats = await getChatListByFolderId(localStorage.token, folderId).catch((error) => {
+			chats = await getChatListByFolderId(sessionStorage.token, folderId).catch((error) => {
 				toast.error(`${error}`);
 				return [];
 			});
@@ -400,7 +402,7 @@
 	};
 
 	const exportHandler = async () => {
-		const chats = await getChatsByFolderId(localStorage.token, folderId).catch((error) => {
+		const chats = await getChatsByFolderId(sessionStorage.token, folderId).catch((error) => {
 			toast.error(`${error}`);
 			return null;
 		});
@@ -495,7 +497,7 @@
 					}
 
 					clickTimer = setTimeout(async () => {
-						const folder = await getFolderById(localStorage.token, folderId).catch((error) => {
+						const folder = await getFolderById(sessionStorage.token, folderId).catch((error) => {
 							toast.error(`${error}`);
 							return null;
 						});

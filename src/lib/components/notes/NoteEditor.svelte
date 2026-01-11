@@ -152,7 +152,7 @@
 
 	const init = async () => {
 		loading = true;
-		const res = await getNoteById(localStorage.token, id).catch((error) => {
+		const res = await getNoteById(sessionStorage.token, id).catch((error) => {
 			toast.error(`${error}`);
 			return null;
 		});
@@ -167,7 +167,7 @@
 				$socket?.emit('join-note', {
 					note_id: id,
 					auth: {
-						token: localStorage.token
+						token: sessionStorage.token
 					}
 				});
 				$socket?.on('note-events', noteEventHandler);
@@ -188,7 +188,7 @@
 		}
 
 		debounceTimeout = setTimeout(async () => {
-			const res = await updateNoteById(localStorage.token, id, {
+			const res = await updateNoteById(sessionStorage.token, id, {
 				title: note?.title === '' ? $i18n.t('Untitled') : note.title,
 				data: {
 					files: files
@@ -259,7 +259,7 @@ ${content}
 		titleGenerating = true;
 
 		const res = await generateOpenAIChatCompletion(
-			localStorage.token,
+			sessionStorage.token,
 			{
 				model: selectedModelId,
 				stream: false,
@@ -428,7 +428,7 @@ ${content}
 			}
 
 			// During the file upload, file content is automatically extracted.
-			const uploadedFile = await uploadFile(localStorage.token, file, metadata);
+			const uploadedFile = await uploadFile(sessionStorage.token, file, metadata);
 
 			if (uploadedFile) {
 				console.log('File upload completed:', uploadedFile);
@@ -439,7 +439,7 @@ ${content}
 				}
 
 				fileItem.status = 'uploaded';
-				fileItem.file = await getFileById(localStorage.token, uploadedFile.id).catch((e) => {
+				fileItem.file = await getFileById(sessionStorage.token, uploadedFile.id).catch((e) => {
 					toast.error(`${e}`);
 					return null;
 				});
@@ -590,7 +590,7 @@ ${content}
 	};
 
 	const deleteNoteHandler = async (id) => {
-		const res = await deleteNoteById(localStorage.token, id).catch((error) => {
+		const res = await deleteNoteById(sessionStorage.token, id).catch((error) => {
 			toast.error(`${error}`);
 			return null;
 		});
@@ -629,7 +629,7 @@ Provide the enhanced notes in markdown format. Use markdown syntax for headings,
 `;
 
 		const [res, controller] = await chatCompletion(
-			localStorage.token,
+			sessionStorage.token,
 			{
 				model: model.id,
 				stream: true,

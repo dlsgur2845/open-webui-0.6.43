@@ -39,6 +39,7 @@
 	import ChatCheck from '../icons/ChatCheck.svelte';
 	import Knobs from '../icons/Knobs.svelte';
 	import { WEBUI_API_BASE_URL } from '$lib/constants';
+	import SessionTimer from '$lib/components/header/SessionTimer.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -227,6 +228,10 @@
 					{/if}
 
 					{#if $user !== undefined && $user !== null}
+						<div class="mr-2">
+							<SessionTimer />
+						</div>
+
 						<UserMenu
 							className="max-w-[240px]"
 							role={$user?.role}

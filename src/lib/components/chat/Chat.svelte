@@ -267,10 +267,10 @@
 
 	const setDefaults = async () => {
 		if (!$tools) {
-			tools.set(await getTools(localStorage.token));
+			tools.set(await getTools(sessionStorage.token));
 		}
 		if (!$functions) {
-			functions.set(await getFunctions(localStorage.token));
+			functions.set(await getFunctions(sessionStorage.token));
 		}
 		if (selectedModels.length !== 1 && !atSelectedModel) {
 			return;
@@ -396,10 +396,10 @@
 				} else if (type === 'chat:title') {
 					chatTitle.set(data);
 					currentChatPage.set(1);
-					await chats.set(await getChatList(localStorage.token, $currentChatPage));
+					await chats.set(await getChatList(sessionStorage.token, $currentChatPage));
 				} else if (type === 'chat:tags') {
-					chat = await getChatById(localStorage.token, $chatId);
-					allTags.set(await getAllTags(localStorage.token));
+					chat = await getChatById(sessionStorage.token, $chatId);
+					allTags.set(await getAllTags(sessionStorage.token));
 				} else if (type === 'source' || type === 'citation') {
 					if (data?.type === 'code_execution') {
 						// Code execution; update existing code execution by ID, or add new one.
@@ -525,7 +525,7 @@
 			selectedModels.filter((modelId) => modelId !== '').length > 0 &&
 			JSON.stringify($selectedFolder?.data?.model_ids) !== JSON.stringify(selectedModels)
 		) {
-			const res = await updateFolderById(localStorage.token, $selectedFolder.id, {
+			const res = await updateFolderById(sessionStorage.token, $selectedFolder.id, {
 				data: {
 					model_ids: selectedModels
 				}
@@ -748,7 +748,7 @@
 
 			// Upload file to server
 			console.log('Uploading file to server...');
-			const uploadedFile = await uploadFile(localStorage.token, file, metadata);
+			const uploadedFile = await uploadFile(sessionStorage.token, file, metadata);
 
 			if (!uploadedFile) {
 				throw new Error('Server returned null response for file upload');
@@ -799,8 +799,8 @@
 		for (const fileItem of fileItems) {
 			try {
 				const res = isYoutubeUrl(fileItem.url)
-					? await processYoutubeVideo(localStorage.token, fileItem.url)
-					: await processWeb(localStorage.token, '', fileItem.url);
+					? await processYoutubeVideo(sessionStorage.token, fileItem.url)
+					: await processWeb(sessionStorage.token, '', fileItem.url);
 
 				if (res) {
 					fileItem.status = 'uploaded';
@@ -1078,13 +1078,13 @@
 			temporaryChatEnabled.set(false);
 		}
 
-		chat = await getChatById(localStorage.token, $chatId).catch(async (error) => {
+		chat = await getChatById(sessionStorage.token, $chatId).catch(async (error) => {
 			await goto('/');
 			return null;
 		});
 
 		if (chat) {
-			tags = await getTagsById(localStorage.token, $chatId).catch(async (error) => {
+			tags = await getTagsById(sessionStorage.token, $chatId).catch(async (error) => {
 				return [];
 			});
 
@@ -1125,7 +1125,7 @@
 					}
 				}
 
-				const taskRes = await getTaskIdsByChatId(localStorage.token, $chatId).catch((error) => {
+				const taskRes = await getTaskIdsByChatId(sessionStorage.token, $chatId).catch((error) => {
 					return null;
 				});
 
@@ -1152,7 +1152,7 @@
 		}
 	};
 	const chatCompletedHandler = async (_chatId, modelId, responseMessageId, messages) => {
-		const res = await chatCompleted(localStorage.token, {
+		const res = await chatCompleted(sessionStorage.token, {
 			model: modelId,
 			messages: messages.map((m) => ({
 				id: m.id,
@@ -1195,7 +1195,7 @@
 
 		if ($chatId == _chatId) {
 			if (!$temporaryChatEnabled) {
-				chat = await updateChatById(localStorage.token, _chatId, {
+				chat = await updateChatById(sessionStorage.token, _chatId, {
 					models: selectedModels,
 					messages: messages,
 					history: history,
@@ -1204,7 +1204,7 @@
 				});
 
 				currentChatPage.set(1);
-				await chats.set(await getChatList(localStorage.token, $currentChatPage));
+				await chats.set(await getChatList(sessionStorage.token, $currentChatPage));
 			}
 		}
 
@@ -1214,7 +1214,7 @@
 	const chatActionHandler = async (_chatId, actionId, modelId, responseMessageId, event = null) => {
 		const messages = createMessagesList(history, responseMessageId);
 
-		const res = await chatAction(localStorage.token, actionId, {
+		const res = await chatAction(sessionStorage.token, actionId, {
 			model: modelId,
 			messages: messages.map((m) => ({
 				id: m.id,
@@ -1250,7 +1250,7 @@
 
 		if ($chatId == _chatId) {
 			if (!$temporaryChatEnabled) {
-				chat = await updateChatById(localStorage.token, _chatId, {
+				chat = await updateChatById(sessionStorage.token, _chatId, {
 					models: selectedModels,
 					messages: messages,
 					history: history,
@@ -1259,7 +1259,7 @@
 				});
 
 				currentChatPage.set(1);
-				await chats.set(await getChatList(localStorage.token, $currentChatPage));
+				await chats.set(await getChatList(sessionStorage.token, $currentChatPage));
 			}
 		}
 	};
@@ -1789,7 +1789,7 @@
 		);
 
 		currentChatPage.set(1);
-		chats.set(await getChatList(localStorage.token, $currentChatPage));
+		chats.set(await getChatList(sessionStorage.token, $currentChatPage));
 	};
 
 	const getFeatures = () => {
@@ -1873,7 +1873,7 @@
 
 		let userLocation;
 		if ($settings?.userLocation) {
-			userLocation = await getAndUpdateUserLocation(localStorage.token).catch((err) => {
+			userLocation = await getAndUpdateUserLocation(sessionStorage.token).catch((err) => {
 				console.error(err);
 				return undefined;
 			});
@@ -1946,7 +1946,7 @@
 		}
 
 		const res = await generateOpenAIChatCompletion(
-			localStorage.token,
+			sessionStorage.token,
 			{
 				stream: stream,
 				model: model.id,
@@ -2094,7 +2094,7 @@
 	const stopResponse = async () => {
 		if (taskIds) {
 			for (const taskId of taskIds) {
-				const res = await stopTask(localStorage.token, taskId).catch((error) => {
+				const res = await stopTask(sessionStorage.token, taskId).catch((error) => {
 					toast.error(`${error}`);
 					return null;
 				});
@@ -2233,7 +2233,7 @@
 		try {
 			generating = true;
 			const [res, controller] = await generateMoACompletion(
-				localStorage.token,
+				sessionStorage.token,
 				message.model ?? '',
 				message.parentId ? history.messages[message.parentId].content : '',
 				responses
@@ -2279,7 +2279,7 @@
 
 		if (!$temporaryChatEnabled) {
 			chat = await createNewChat(
-				localStorage.token,
+				sessionStorage.token,
 				{
 					id: _chatId,
 					title: $i18n.t('New Chat'),
@@ -2301,7 +2301,7 @@
 
 			await tick();
 
-			await chats.set(await getChatList(localStorage.token, $currentChatPage));
+			await chats.set(await getChatList(sessionStorage.token, $currentChatPage));
 			currentChatPage.set(1);
 
 			selectedFolder.set(null);
@@ -2317,7 +2317,7 @@
 	const saveChatHandler = async (_chatId, history) => {
 		if ($chatId == _chatId) {
 			if (!$temporaryChatEnabled) {
-				chat = await updateChatById(localStorage.token, _chatId, {
+				chat = await updateChatById(sessionStorage.token, _chatId, {
 					models: selectedModels,
 					history: history,
 					messages: createMessagesList(history, history.currentId),
@@ -2325,7 +2325,7 @@
 					files: chatFiles
 				});
 				currentChatPage.set(1);
-				await chats.set(await getChatList(localStorage.token, $currentChatPage));
+				await chats.set(await getChatList(sessionStorage.token, $currentChatPage));
 			}
 		}
 	};
@@ -2359,7 +2359,7 @@
 
 	const moveChatHandler = async (chatId, folderId) => {
 		if (chatId && folderId) {
-			const res = await updateChatFolderIdById(localStorage.token, chatId, folderId).catch(
+			const res = await updateChatFolderIdById(sessionStorage.token, chatId, folderId).catch(
 				(error) => {
 					toast.error(`${error}`);
 					return null;
@@ -2368,8 +2368,8 @@
 
 			if (res) {
 				currentChatPage.set(1);
-				await chats.set(await getChatList(localStorage.token, $currentChatPage));
-				await pinnedChats.set(await getPinnedChatList(localStorage.token));
+				await chats.set(await getChatList(sessionStorage.token, $currentChatPage));
+				await pinnedChats.set(await getPinnedChatList(sessionStorage.token));
 
 				toast.success($i18n.t('Chat moved successfully'));
 			}
@@ -2470,7 +2470,7 @@
 									messages.find((m) => m.role === 'user')?.content ?? $i18n.t('New Chat');
 
 								const savedChat = await createNewChat(
-									localStorage.token,
+									sessionStorage.token,
 									{
 										id: uuidv4(),
 										title: title.length > 50 ? `${title.slice(0, 50)}...` : title,
@@ -2485,7 +2485,7 @@
 								if (savedChat) {
 									temporaryChatEnabled.set(false);
 									chatId.set(savedChat.id);
-									chats.set(await getChatList(localStorage.token, $currentChatPage));
+									chats.set(await getChatList(sessionStorage.token, $currentChatPage));
 
 									await goto(`/c/${savedChat.id}`);
 									toast.success($i18n.t('Conversation saved successfully'));

@@ -74,7 +74,7 @@
 			webConfig.PLAYWRIGHT_TIMEOUT = webConfig.PLAYWRIGHT_TIMEOUT.toString();
 		}
 
-		const res = await updateRAGConfig(localStorage.token, {
+		const res = await updateRAGConfig(sessionStorage.token, {
 			web: webConfig
 		});
 
@@ -88,7 +88,7 @@
 	};
 
 	onMount(async () => {
-		const res = await getRAGConfig(localStorage.token);
+		const res = await getRAGConfig(sessionStorage.token);
 
 		if (res) {
 			webConfig = res.web;

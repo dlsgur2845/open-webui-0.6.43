@@ -108,7 +108,7 @@
 	const deleteHandler = async (prompt) => {
 		const command = prompt.command;
 
-		const res = await deletePromptByCommand(localStorage.token, command).catch((err) => {
+		const res = await deletePromptByCommand(sessionStorage.token, command).catch((err) => {
 			toast.error(err);
 			return null;
 		});
@@ -121,8 +121,8 @@
 	};
 
 	const init = async () => {
-		prompts = await getPromptList(localStorage.token);
-		await _prompts.set(await getPrompts(localStorage.token));
+		prompts = await getPromptList(sessionStorage.token);
+		await _prompts.set(await getPrompts(sessionStorage.token));
 	};
 
 	onMount(async () => {
@@ -194,7 +194,7 @@
 					console.log(savedPrompts);
 
 					for (const prompt of savedPrompts) {
-						await createNewPrompt(localStorage.token, {
+						await createNewPrompt(sessionStorage.token, {
 							command: prompt.command.charAt(0) === '/' ? prompt.command.slice(1) : prompt.command,
 							title: prompt.title,
 							content: prompt.content
@@ -204,8 +204,8 @@
 						});
 					}
 
-					prompts = await getPromptList(localStorage.token);
-					await _prompts.set(await getPrompts(localStorage.token));
+					prompts = await getPromptList(sessionStorage.token);
+					await _prompts.set(await getPrompts(sessionStorage.token));
 
 					importFiles = [];
 					promptsImportInputElement.value = '';

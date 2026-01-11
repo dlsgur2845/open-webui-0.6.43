@@ -6,17 +6,19 @@
 
 ## 1. 개요 및 사전 준비
 
-*   **목표**: 0.6.43-fix1의 보안 강화(세션, JTI, 관리자 차단) 및 데이터 정책(채팅 삭제, 약관 동의) 기능을 0.7.2 기반의 커스텀 버전(0.7.2-fix1)에 동일하게 적용.
-*   **주의사항**: 0.7.2 버전의 베이스 코드가 변경되었을 수 있으므로, 라인 번호보다는 **코드의 문맥(Context)**을 보고 삽입 위치를 찾으십시오.
+* **목표**: 0.6.43-fix1의 보안 강화(세션, JTI, 관리자 차단) 및 데이터 정책(채팅 삭제, 약관 동의) 기능을 0.7.2 기반의 커스텀 버전(0.7.2-fix1)에 동일하게 적용.
+* **주의사항**: 0.7.2 버전의 베이스 코드가 변경되었을 수 있으므로, 라인 번호보다는 **코드의 문맥(Context)**을 보고 삽입 위치를 찾으십시오.
 
 ---
 
 ## 2. 백엔드 (Backend) 변경 사항
 
 ### 2.1. 의존성 추가 (`Dockerfile`)
+
 문서 파싱 호환성을 위한 패키지를 추가합니다.
 
 **파일**: `Dockerfile`
+
 ```dockerfile
 # (기존) RUN pip3 install --no-cache-dir uv && ...
 # 아래 내용을 pip3 install 라인에 추가하거나 별도의 RUN 명령어로 추가
@@ -24,18 +26,22 @@ RUN pip3 install --no-cache-dir msoffcrypto-tool chardet nltk pyhwp
 ```
 
 ### 2.2. 환경 설정 (`backend/open_webui/env.py`)
+
 새로운 환경 변수를 로드합니다.
 
 **파일**: `backend/open_webui/env.py`
+
 ```python
 # ... 기존 환경변수 로드 부분 하단에 추가
 DISABLE_ADMIN = os.environ.get("DISABLE_ADMIN", "False").lower() == "true"
 ```
 
 ### 2.3. 설정 관리 (`backend/open_webui/config.py`)
+
 `AppConfig` 클래스나 관련 설정 로직에 새 변수를 매핑합니다.
 
 **파일**: `backend/open_webui/config.py`
+
 ```python
 # ... (상단 import 부분)
 from open_webui.env import (
@@ -53,9 +59,11 @@ class AppConfig:
 ```
 
 ### 2.4. 메인 로직 및 주기적 작업 (`backend/open_webui/main.py`)
+
 채팅 자동 삭제 스케줄러와 프론트엔드로 전달할 설정값을 추가합니다.
 
 **파일**: `backend/open_webui/main.py`
+
 ```python
 # [Import 추가]
 from open_webui.config import (
@@ -106,9 +114,11 @@ async def get_app_config(request: Request):
 ```
 
 ### 2.5. 인증 및 권한 로직 (`backend/open_webui/utils/auth.py`)
+
 관리자 접근 차단 로직을 추가합니다.
 
 **파일**: `backend/open_webui/utils/auth.py`
+
 ```python
 # [Import 추가]
 from open_webui.env import DISABLE_ADMIN
@@ -129,9 +139,11 @@ def get_admin_user(user=Depends(get_current_user)):
 ```
 
 ### 2.6. 인증 라우터 (`backend/open_webui/routers/auths.py`)
+
 클라이언트와의 시간 동기화를 위해 서버 타임스탬프를 응답에 포함합니다.
 
 **파일**: `backend/open_webui/routers/auths.py`
+
 ```python
 # [SessionUserResponse 클래스 등 수정]
 class SessionUserResponse(Token, UserProfileImageResponse):
@@ -144,9 +156,11 @@ class SessionUserResponse(Token, UserProfileImageResponse):
 ```
 
 ### 2.7. 데이터베이스 모델 (`backend/open_webui/models/chats.py`)
+
 오래된 채팅 삭제 메서드를 추가합니다.
 
 **파일**: `backend/open_webui/models/chats.py`
+
 ```python
     # [ChatTable 클래스 내부 메서드 추가]
     def delete_chats_older_than(self, days: int) -> int:
@@ -169,9 +183,11 @@ class SessionUserResponse(Token, UserProfileImageResponse):
 ## 3. 데이터베이스 마이그레이션 (DB)
 
 ### 3.1. JTI 컬럼 추가
+
 `alembic` 마이그레이션 파일을 생성하거나 수동으로 DB를 업데이트해야 합니다.
 
 **파일**: `backend/open_webui/migrations/versions/xxxx_add_token_jti_to_auth.py` (새로 생성)
+
 ```python
 """add token_jti to auth"""
 from alembic import op
@@ -191,22 +207,26 @@ def downgrade():
 ## 4. 프론트엔드 (Frontend) 변경 사항
 
 ### 4.1. 스토리지 변경 (전역) **[중요]**
+
 프로젝트 전체에서 `localStorage`에 저장되는 토큰 로직을 `sessionStorage`로 변경해야 합니다.
 **대상 파일**: `src/lib/apis/index.ts`, `src/routes/+layout.svelte`, 인증 관련 파일들.
 
-*   **검색**: `localStorage.token` 및 `localStorage.getItem('token')`
-*   **변경**: `sessionStorage.token` 및 `sessionStorage.getItem('token')`
-*   **주의**: `AccountPending.svelte` 파일에서도 변경이 필요합니다 (`src/lib/components/layout/Overlay/AccountPending.svelte`).
+* **검색**: `sessionStorage.token` 및 `localStorage.getItem('token')`
+* **변경**: `sessionStorage.token` 및 `sessionStorage.getItem('token')`
+* **주의**: `AccountPending.svelte` 파일에서도 변경이 필요합니다 (`src/lib/components/layout/Overlay/AccountPending.svelte`).
 
 ### 4.2. API 클라이언트 (`src/lib/apis/index.ts`)
+
 토큰 참조 위치 변경. (위의 4.1 전체 변경에 포함됨)
 
 ### 4.3. 레이아웃 및 보안 로직 (`src/routes/+layout.svelte`)
+
 세션 타임아웃 감지, 글로벌 401 인터셉터, 약관 동의 모달 연결.
 
 **파일**: `src/routes/+layout.svelte` (또는 `src/routes/(app)/+layout.svelte`)
 
 **1. Import 및 State 추가**
+
 ```javascript
 // [script]
 import AgreementModal from '$lib/components/AgreementModal.svelte'; // 추가
@@ -220,6 +240,7 @@ let showAgreement = false; // 추가
 ```
 
 **2. 세션 체크 타이머 로직 (onMount 내부에 추가)**
+
 ```javascript
 // Integrated Timer & Auto Refresh (check every second)
 const timerInterval = setInterval(async () => {
@@ -267,6 +288,7 @@ return () => {
 ```
 
 **3. HTML 추가 (파일 하단부)**
+
 ```svelte
 <AgreementModal bind:show={showAgreement} /> <!-- 추가 -->
 <SessionTimeoutModal
@@ -280,9 +302,11 @@ return () => {
 ```
 
 ### 4.4. 인증 페이지 (`src/routes/auth/+page.svelte`)
+
 로그인 완료 시 토큰 저장소를 `sessionStorage`로 설정하고, 이미 로그인된 유저 체크 로직 수정.
 
 **파일**: `src/routes/auth/+page.svelte`
+
 ```javascript
 // onMount 체크 로직
 if ($user) { // $user가 존재하면 리다이렉트
@@ -291,9 +315,11 @@ if ($user) { // $user가 존재하면 리다이렉트
 ```
 
 ### 4.5. 관리자 페이지 차단 (`src/routes/(app)/admin/+layout.svelte`)
+
 프론트엔드 단에서도 관리자 페이지 접근을 막습니다.
 
 **파일**: `src/routes/(app)/admin/+layout.svelte`
+
 ```javascript
 import { config } from '$lib/stores'; // config 스토어 import
 
@@ -309,7 +335,9 @@ onMount(async () => {
 ### 4.6. 신규 파일 생성
 
 #### 4.6.1 `src/lib/components/layout/Overlay/SessionTimeoutModal.svelte`
+
 아래 코드를 전체 복사하여 파일을 생성하십시오.
+
 ```svelte
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
@@ -359,7 +387,9 @@ onMount(async () => {
 ```
 
 #### 4.6.2 `src/lib/components/AgreementModal.svelte`
+
 아래 코드를 전체 복사하여 파일을 생성하십시오.
+
 ```svelte
 <script lang="ts">
    import { onMount, getContext } from 'svelte';
@@ -426,7 +456,9 @@ onMount(async () => {
 ```
 
 #### 4.6.3 `static/agreement.md`
+
 아래 내용을 파일로 저장하십시오.
+
 ```
 < 원내 중요정보 보호 및 정보주체 권리 보장을 위한 고지사항(예시) >
 
@@ -470,10 +502,10 @@ const onBackdropClick = (e) => {
 
 ## 5. 최종 확인
 
-1.  [ ] `AgreementModal` 및 `agreement.md` 파일이 존재하고, 앱 최초 접속 시 약관이 뜨는가?
-2.  [ ] 약관 모달 및 중요 모달의 배경을 클릭해도 닫히지 않는가? (`dismissible={false}` 동작)
-3.  [ ] 세션 만료 임박 시 경고창이 뜨고 리프레시되는가?
-4.  [ ] `sessionStorage` 사용으로 탭 종료 시 로그아웃되는가?
+1. [ ] `AgreementModal` 및 `agreement.md` 파일이 존재하고, 앱 최초 접속 시 약관이 뜨는가?
+2. [ ] 약관 모달 및 중요 모달의 배경을 클릭해도 닫히지 않는가? (`dismissible={false}` 동작)
+3. [ ] 세션 만료 임박 시 경고창이 뜨고 리프레시되는가?
+4. [ ] `sessionStorage` 사용으로 탭 종료 시 로그아웃되는가?
 
 ---
 *Generated by Antigravity*

@@ -258,6 +258,20 @@ class ChatTable:
         """Recursively remove null bytes from strings in dict/list structures."""
         return sanitize_data_for_db(obj)
 
+    def delete_chats_older_than(self, days: int) -> int:
+        try:
+            with get_db() as db:
+                cutoff_time = int(time.time()) - (days * 24 * 60 * 60)
+                result = (
+                    db.query(Chat)
+                    .filter(Chat.updated_at < cutoff_time)
+                    .delete(synchronize_session=False)
+                )
+                db.commit()
+                return result
+        except Exception:
+            return 0
+
     def _sanitize_chat_row(self, chat_item):
         """
         Clean a Chat SQLAlchemy model's title + chat JSON,

@@ -25,9 +25,11 @@
 		loaded = false;
 		feedbackData = null;
 		if (selectedFeedback) {
-			feedbackData = await getFeedbackById(localStorage.token, selectedFeedback.id).catch((err) => {
-				return null;
-			});
+			feedbackData = await getFeedbackById(sessionStorage.token, selectedFeedback.id).catch(
+				(err) => {
+					return null;
+				}
+			);
 
 			console.log('Feedback Data:', selectedFeedback, feedbackData);
 		}

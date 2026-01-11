@@ -47,7 +47,7 @@
 			console.log(sessionUser);
 			toast.success($i18n.t(`You're now logged in.`));
 			if (sessionUser.token) {
-				localStorage.token = sessionUser.token;
+				sessionStorage.token = sessionUser.token;
 			}
 			$socket.emit('user-join', { auth: { token: sessionUser.token } });
 			await user.set(sessionUser);
@@ -64,7 +64,7 @@
 			}
 
 			goto(redirectPath);
-			localStorage.removeItem('redirectPath');
+			sessionStorage.removeItem('redirectPath');
 		}
 	};
 
@@ -136,8 +136,8 @@
 			return;
 		}
 
-		localStorage.token = token;
-		await setSessionUser(sessionUser, localStorage.getItem('redirectPath') || null);
+		sessionStorage.token = token;
+		await setSessionUser(sessionUser, sessionStorage.getItem('redirectPath') || null);
 	};
 
 	let onboarding = false;
@@ -171,7 +171,7 @@
 			goto(redirectPath || '/');
 		} else {
 			if (redirectPath) {
-				localStorage.setItem('redirectPath', redirectPath);
+				sessionStorage.setItem('redirectPath', redirectPath);
 			}
 		}
 

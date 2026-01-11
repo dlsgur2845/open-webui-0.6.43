@@ -309,7 +309,7 @@
 				}
 			} else {
 				for (const [idx, sentence] of messageContentParts.entries()) {
-					const res = await synthesizeOpenAISpeech(localStorage.token, voiceId, sentence).catch(
+					const res = await synthesizeOpenAISpeech(sessionStorage.token, voiceId, sentence).catch(
 						(error) => {
 							console.error(error);
 							toast.error(`${error}`);
@@ -411,7 +411,7 @@
 			}
 		};
 
-		const chat = await getChatById(localStorage.token, chatId).catch((error) => {
+		const chat = await getChatById(sessionStorage.token, chatId).catch((error) => {
 			toast.error(`${error}`);
 		});
 		if (!chat) {
@@ -463,14 +463,14 @@
 		let feedback = null;
 		if (message?.feedbackId) {
 			feedback = await updateFeedbackById(
-				localStorage.token,
+				sessionStorage.token,
 				message.feedbackId,
 				feedbackItem
 			).catch((error) => {
 				toast.error(`${error}`);
 			});
 		} else {
-			feedback = await createNewFeedback(localStorage.token, feedbackItem).catch((error) => {
+			feedback = await createNewFeedback(sessionStorage.token, feedbackItem).catch((error) => {
 				toast.error(`${error}`);
 			});
 
@@ -489,12 +489,15 @@
 
 			if (!updatedMessage.annotation?.tags && (message?.content ?? '') !== '') {
 				// attempt to generate tags
-				const tags = await generateTags(localStorage.token, message.model, messages, chatId).catch(
-					(error) => {
-						console.error(error);
-						return [];
-					}
-				);
+				const tags = await generateTags(
+					sessionStorage.token,
+					message.model,
+					messages,
+					chatId
+				).catch((error) => {
+					console.error(error);
+					return [];
+				});
 				console.log(tags);
 
 				if (tags) {
@@ -503,7 +506,7 @@
 
 					saveMessage(message.id, updatedMessage);
 					await updateFeedbackById(
-						localStorage.token,
+						sessionStorage.token,
 						updatedMessage.feedbackId,
 						feedbackItem
 					).catch((error) => {

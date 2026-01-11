@@ -39,7 +39,6 @@
 
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
 	import SettingsModal from '$lib/components/chat/SettingsModal.svelte';
-	import ChangelogModal from '$lib/components/ChangelogModal.svelte';
 	import AccountPending from '$lib/components/layout/Overlay/AccountPending.svelte';
 	import UpdateInfoToast from '$lib/components/layout/UpdateInfoToast.svelte';
 	import Spinner from '$lib/components/common/Spinner.svelte';
@@ -83,7 +82,7 @@
 	};
 
 	const setUserSettings = async (cb: () => Promise<void>) => {
-		let userSettings = await getUserSettings(localStorage.token).catch((error) => {
+		let userSettings = await getUserSettings(sessionStorage.token).catch((error) => {
 			console.error(error);
 			return null;
 		});
@@ -109,7 +108,7 @@
 	const setModels = async () => {
 		models.set(
 			await getModels(
-				localStorage.token,
+				sessionStorage.token,
 				$config?.features?.enable_direct_connections ? ($settings?.directConnections ?? null) : null
 			)
 		);
@@ -132,12 +131,12 @@
 	};
 
 	const setBanners = async () => {
-		const bannersData = await getBanners(localStorage.token);
+		const bannersData = await getBanners(sessionStorage.token);
 		banners.set(bannersData);
 	};
 
 	const setTools = async () => {
-		const toolsData = await getTools(localStorage.token);
+		const toolsData = await getTools(sessionStorage.token);
 		tools.set(toolsData);
 	};
 
@@ -258,10 +257,6 @@
 		};
 		setupKeyboardShortcuts();
 
-		if ($user?.role === 'admin' && ($settings?.showChangelog ?? true)) {
-			showChangelog.set($settings?.version !== $config.version);
-		}
-
 		if ($user?.role === 'admin' || ($user?.permissions?.chat?.temporary ?? true)) {
 			if ($page.url.searchParams.get('temporary-chat') === 'true') {
 				temporaryChatEnabled.set(true);
@@ -292,7 +287,7 @@
 	});
 
 	const checkForVersionUpdates = async () => {
-		version = await getVersionUpdates(localStorage.token).catch((error) => {
+		version = await getVersionUpdates(sessionStorage.token).catch((error) => {
 			return {
 				current: WEBUI_VERSION,
 				latest: WEBUI_VERSION
@@ -302,7 +297,6 @@
 </script>
 
 <SettingsModal bind:show={$showSettings} />
-<ChangelogModal bind:show={$showChangelog} />
 
 {#if version && compareVersion(version.latest, version.current) && ($settings?.showUpdateToast ?? true)}
 	<div class=" absolute bottom-8 right-8 z-50" in:fade={{ duration: 100 }}>

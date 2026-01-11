@@ -354,7 +354,7 @@ export const getToolServersData = async (servers: object[]) => {
 					} else if (auth_type === 'none') {
 						// No authentication
 					} else if (auth_type === 'session') {
-						toolServerToken = localStorage.token;
+						toolServerToken = sessionStorage.token;
 					}
 
 					let res = null;
@@ -1674,7 +1674,7 @@ export interface ModelMeta {
 	profile_image_url?: string;
 }
 
-export interface ModelParams {}
+export interface ModelParams { }
 
 export type GlobalModelConfig = ModelConfig[];
 

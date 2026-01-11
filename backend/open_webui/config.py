@@ -32,6 +32,9 @@ from open_webui.env import (
     WEBUI_FAVICON_URL,
     WEBUI_NAME,
     log,
+    DISABLE_ADMIN,
+    CHAT_DELETE_ENABLED,
+    CHAT_DELETE_DAYS,
 )
 from open_webui.internal.db import Base, get_db
 from open_webui.utils.redis import get_redis_connection
@@ -228,6 +231,10 @@ class AppConfig:
     _redis_key_prefix: str
 
     _state: dict[str, PersistentConfig]
+
+    CHAT_DELETE_ENABLED: bool = CHAT_DELETE_ENABLED
+    CHAT_DELETE_DAYS: int = CHAT_DELETE_DAYS
+    DISABLE_ADMIN: bool = DISABLE_ADMIN
 
     def __init__(
         self,

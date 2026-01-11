@@ -87,7 +87,7 @@
 	const getModelList = async () => {
 		try {
 			const res = await getWorkspaceModels(
-				localStorage.token,
+				sessionStorage.token,
 				query,
 				viewOption,
 				selectedTag,
@@ -104,7 +104,7 @@
 				total = res.total;
 
 				// get tags
-				tags = await getModelTags(localStorage.token).catch((error) => {
+				tags = await getModelTags(sessionStorage.token).catch((error) => {
 					toast.error(`${error}`);
 					return [];
 				});
@@ -115,7 +115,7 @@
 	};
 
 	const deleteModelHandler = async (model) => {
-		const res = await deleteModelById(localStorage.token, model.id).catch((e) => {
+		const res = await deleteModelById(sessionStorage.token, model.id).catch((e) => {
 			toast.error(`${e}`);
 			return null;
 		});
@@ -129,7 +129,7 @@
 
 		await _models.set(
 			await getModels(
-				localStorage.token,
+				sessionStorage.token,
 				$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
 			)
 		);
@@ -170,7 +170,7 @@
 
 		console.log(model);
 
-		const res = await updateModelById(localStorage.token, model.id, model);
+		const res = await updateModelById(sessionStorage.token, model.id, model);
 
 		if (res) {
 			toast.success(
@@ -186,7 +186,7 @@
 
 		await _models.set(
 			await getModels(
-				localStorage.token,
+				sessionStorage.token,
 				$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
 			)
 		);
@@ -227,14 +227,14 @@
 		}
 
 		settings.set({ ...$settings, pinnedModels: pinnedModels });
-		await updateUserSettings(localStorage.token, { ui: $settings });
+		await updateUserSettings(sessionStorage.token, { ui: $settings });
 	};
 
 	onMount(async () => {
 		viewOption = localStorage.workspaceViewOption ?? '';
 		page = 1;
 
-		let groups = await getGroups(localStorage.token);
+		let groups = await getGroups(sessionStorage.token);
 		groupIds = groups.map((group) => group.id);
 
 		loaded = true;
@@ -306,19 +306,19 @@
 					for (const model of savedModels) {
 						if (model?.info ?? false) {
 							if ($_models.find((m) => m.id === model.id)) {
-								await updateModelById(localStorage.token, model.id, model.info).catch((error) => {
+								await updateModelById(sessionStorage.token, model.id, model.info).catch((error) => {
 									toast.error(`${error}`);
 									return null;
 								});
 							} else {
-								await createNewModel(localStorage.token, model.info).catch((error) => {
+								await createNewModel(sessionStorage.token, model.info).catch((error) => {
 									toast.error(`${error}`);
 									return null;
 								});
 							}
 						} else {
 							if (model?.id && model?.name) {
-								await createNewModel(localStorage.token, model).catch((error) => {
+								await createNewModel(sessionStorage.token, model).catch((error) => {
 									toast.error(`${error}`);
 									return null;
 								});
@@ -328,7 +328,7 @@
 
 					await _models.set(
 						await getModels(
-							localStorage.token,
+							sessionStorage.token,
 							$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
 						)
 					);
@@ -598,10 +598,10 @@
 																<Switch
 																	bind:state={model.is_active}
 																	on:change={async () => {
-																		toggleModelById(localStorage.token, model.id);
+																		toggleModelById(sessionStorage.token, model.id);
 																		_models.set(
 																			await getModels(
-																				localStorage.token,
+																				sessionStorage.token,
 																				$config?.features?.enable_direct_connections &&
 																					($settings?.directConnections ?? null)
 																			)

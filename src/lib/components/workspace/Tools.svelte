@@ -83,7 +83,7 @@
 	};
 
 	const shareHandler = async (tool) => {
-		const item = await getToolById(localStorage.token, tool.id).catch((error) => {
+		const item = await getToolById(sessionStorage.token, tool.id).catch((error) => {
 			toast.error(`${error}`);
 			return null;
 		});
@@ -107,7 +107,7 @@
 	};
 
 	const cloneHandler = async (tool) => {
-		const _tool = await getToolById(localStorage.token, tool.id).catch((error) => {
+		const _tool = await getToolById(sessionStorage.token, tool.id).catch((error) => {
 			toast.error(`${error}`);
 			return null;
 		});
@@ -123,7 +123,7 @@
 	};
 
 	const exportHandler = async (tool) => {
-		const _tool = await getToolById(localStorage.token, tool.id).catch((error) => {
+		const _tool = await getToolById(sessionStorage.token, tool.id).catch((error) => {
 			toast.error(`${error}`);
 			return null;
 		});
@@ -137,7 +137,7 @@
 	};
 
 	const deleteHandler = async (tool) => {
-		const res = await deleteToolById(localStorage.token, tool.id).catch((error) => {
+		const res = await deleteToolById(sessionStorage.token, tool.id).catch((error) => {
 			toast.error(`${error}`);
 			return null;
 		});
@@ -149,8 +149,8 @@
 	};
 
 	const init = async () => {
-		tools = await getToolList(localStorage.token);
-		_tools.set(await getTools(localStorage.token));
+		tools = await getToolList(sessionStorage.token);
+		_tools.set(await getTools(sessionStorage.token));
 	};
 
 	onMount(async () => {
@@ -201,7 +201,7 @@
 		goto('/workspace/tools/create');
 	}}
 	loadUrlHandler={async (url) => {
-		return await loadToolByUrl(localStorage.token, url);
+		return await loadToolByUrl(sessionStorage.token, url);
 	}}
 	successMessage={$i18n.t('Tool imported successfully')}
 />
@@ -250,7 +250,7 @@
 					<button
 						class="flex text-xs items-center space-x-1 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-850 dark:hover:bg-gray-800 dark:text-gray-200 transition"
 						on:click={async () => {
-							const _tools = await exportTools(localStorage.token).catch((error) => {
+							const _tools = await exportTools(sessionStorage.token).catch((error) => {
 								toast.error(`${error}`);
 								return null;
 							});
@@ -595,14 +595,14 @@
 				console.log(_tools);
 
 				for (const tool of _tools) {
-					const res = await createNewTool(localStorage.token, tool).catch((error) => {
+					const res = await createNewTool(sessionStorage.token, tool).catch((error) => {
 						toast.error(`${error}`);
 						return null;
 					});
 				}
 
 				toast.success($i18n.t('Tool imported successfully'));
-				tools.set(await getTools(localStorage.token));
+				tools.set(await getTools(sessionStorage.token));
 			};
 
 			reader.readAsText(importFiles[0]);
