@@ -23,7 +23,7 @@ services:
     environment:
       - 'OLLAMA_BASE_URL=http://ollama:11434'
       - 'WEBUI_SECRET_KEY='
-      - 'DISABLE_ADMIN=false'
+      - 'DISABLE_ADMIN=true'
       - 'CHAT_DELETE_ENABLED=true'
       - 'CHAT_DELETE_DAYS=1'
     extra_hosts:
