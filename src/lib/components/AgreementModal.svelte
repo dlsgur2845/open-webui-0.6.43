@@ -55,7 +55,7 @@
 				on:click={handleAgree}
 				class="px-5 py-2 text-sm font-medium bg-black hover:bg-gray-900 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full"
 			>
-				{$i18n.t('Agree and Continue')}
+				동의하기
 			</button>
 		</div>
 	</div>
