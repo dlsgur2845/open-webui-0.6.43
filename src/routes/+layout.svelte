@@ -625,7 +625,9 @@
 					if (sessionStorage.getItem('token')) sessionStorage.removeItem('token');
 
 					// Force clean redirect to auth page
-					window.location.href = '/auth';
+					if (window.location.pathname !== '/auth') {
+						window.location.href = '/auth';
+					}
 
 					// Return a dummy response to prevent downstream errors while redirecting
 					return new Response(null, { status: 401 });

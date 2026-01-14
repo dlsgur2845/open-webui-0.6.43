@@ -65,13 +65,13 @@
 			gender: gender ? gender : null,
 			date_of_birth: dateOfBirth ? dateOfBirth : null
 		}).catch((error) => {
-			toast.error(`${error}`);
+			toast.error($i18n.t('Something went wrong. Please contact administrator.'));
 		});
 
 		if (updatedUser) {
 			// Get Session User Info
 			const sessionUser = await getSessionUser(sessionStorage.token).catch((error) => {
-				toast.error(`${error}`);
+				toast.error($i18n.t('Something went wrong. Please contact administrator.'));
 				return null;
 			});
 
@@ -92,7 +92,7 @@
 
 	onMount(async () => {
 		const user = await getSessionUser(sessionStorage.token).catch((error) => {
-			toast.error(`${error}`);
+			toast.error($i18n.t('Something went wrong. Please contact administrator.'));
 			return null;
 		});
 

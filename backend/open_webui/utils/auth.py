@@ -343,12 +343,17 @@ async def get_current_user(
 
                 # Single Session Enforcement
                 from open_webui.models.auths import Auths
+
                 user_jti = Auths.get_user_token_jti_by_id(user.id)
-                if user_jti and data.get("jti") != user_jti:
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail=ERROR_MESSAGES.INVALID_TOKEN,
-                    )
+                token_jti = data.get("jti")
+
+                if token_jti:
+                    # If the token has a JTI, it must match the one in the DB
+                    if user_jti != token_jti:
+                        raise HTTPException(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail=ERROR_MESSAGES.INVALID_TOKEN,
+                        )
 
                 # Refresh the user's last active timestamp asynchronously
                 # to prevent blocking the request
