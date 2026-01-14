@@ -151,7 +151,8 @@ RUN pip3 install --no-cache-dir uv && \
     rm -rf /var/lib/apt/lists/*;
 
 # Install additional dependencies for documented parsing compatibility
-RUN pip3 install --no-cache-dir msoffcrypto-tool chardet nltk pyhwp
+RUN pip3 install --no-cache-dir msoffcrypto-tool chardet nltk pyhwp && \
+    python3 -m nltk.downloader punkt punkt_tab
 
 # Install Ollama if requested
 RUN if [ "$USE_OLLAMA" = "true" ]; then \
