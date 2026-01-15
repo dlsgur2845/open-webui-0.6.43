@@ -257,7 +257,13 @@ async def update_password(
 
         if user:
             try:
-                validate_password(form_data.password)
+                validate_password(
+                    form_data.new_password,
+                    {
+                        "email": session_user.email,
+                        "name": session_user.name,
+                    },
+                )
             except Exception as e:
                 raise HTTPException(400, detail=str(e))
             hashed = get_password_hash(form_data.new_password)
@@ -740,10 +746,17 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
         raise HTTPException(400, detail=ERROR_MESSAGES.EMAIL_TAKEN)
 
     try:
-        try:
-            validate_password(form_data.password)
-        except Exception as e:
-            raise HTTPException(400, detail=str(e))
+        validate_password(
+            form_data.password,
+            {
+                "email": form_data.email,
+                "name": form_data.name,
+            },
+        )
+    except Exception as e:
+        raise HTTPException(400, detail=str(e))
+
+    try:
 
         hashed = get_password_hash(form_data.password)
 
@@ -941,7 +954,13 @@ async def add_user(
 
     try:
         try:
-            validate_password(form_data.password)
+            validate_password(
+                form_data.password,
+                {
+                    "email": user.email,
+                    "name": user.name,
+                },
+            )
         except Exception as e:
             raise HTTPException(400, detail=str(e))
 

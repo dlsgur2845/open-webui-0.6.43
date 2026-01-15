@@ -737,7 +737,14 @@
 				$socket?.on('events', chatEventHandler);
 				$socket?.on('events:channel', channelEventHandler);
 
-				const userSettings = await getUserSettings(sessionStorage.token);
+				let userSettings = null;
+				if (['user', 'admin'].includes(value.role)) {
+					userSettings = await getUserSettings(sessionStorage.token).catch((error) => {
+						console.error(error);
+						return null;
+					});
+				}
+
 				if (userSettings) {
 					settings.set(userSettings.ui);
 				} else {

@@ -428,6 +428,14 @@ PASSWORD_VALIDATION_REGEX_PATTERN = os.environ.get(
     "^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$",
 )
 
+PASSWORD_BLACKLIST = [
+    item.strip()
+    for item in os.environ.get(
+        "PASSWORD_BLACKLIST", "password,123456,admin,test"
+    ).split(",")
+    if item.strip()
+]
+
 try:
     PASSWORD_VALIDATION_REGEX_PATTERN = re.compile(PASSWORD_VALIDATION_REGEX_PATTERN)
 except Exception as e:

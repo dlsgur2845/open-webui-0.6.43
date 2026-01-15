@@ -159,6 +159,14 @@ class ERROR_MESSAGES(str, Enum):
         err if err else "비밀번호가 요구 조건을 충족하지 않습니다."
     )
 
+    # Password validation errors
+    PASSWORD_TOO_SHORT = "비밀번호는 최소 8자 이상이어야 합니다."
+    PASSWORD_MISSING_CHARS = "비밀번호는 영문자, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다."
+    PASSWORD_SEQUENTIAL = "비밀번호에 4자 이상의 연속된 문자나 숫자를 사용할 수 없습니다 (예: 1234, abcd)."
+    PASSWORD_REPETITIVE = "비밀번호에 4자 이상의 반복된 문자나 숫자를 사용할 수 없습니다 (예: 1111, aaaa)."
+    PASSWORD_CONTAINS_ACCOUNT_INFO = "비밀번호에 이메일 아이디나 이름을 포함할 수 없습니다."
+    PASSWORD_COMMON = "비밀번호로 사용할 수 없는 쉬운 문자열이 포함되어 있습니다."
+
 
 class TASKS(str, Enum):
     def __str__(self) -> str:

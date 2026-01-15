@@ -1,4 +1,5 @@
 import logging
+import re
 import uuid
 import jwt
 import base64
@@ -31,6 +32,7 @@ from open_webui.env import (
     ENABLE_PASSWORD_VALIDATION,
     OFFLINE_MODE,
     LICENSE_BLOB,
+    PASSWORD_BLACKLIST,
     PASSWORD_VALIDATION_REGEX_PATTERN,
     REDIS_KEY_PREFIX,
     pk,
@@ -164,16 +166,75 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
-def validate_password(password: str) -> bool:
+def validate_password(password: str, user_data: Optional[Dict[str, str]] = None) -> bool:
     # The password passed to bcrypt must be 72 bytes or fewer. If it is longer, it will be truncated before hashing.
     if len(password.encode("utf-8")) > 72:
         raise Exception(
             ERROR_MESSAGES.PASSWORD_TOO_LONG,
         )
 
-    if ENABLE_PASSWORD_VALIDATION:
-        if not PASSWORD_VALIDATION_REGEX_PATTERN.match(password):
-            raise Exception(ERROR_MESSAGES.INVALID_PASSWORD())
+    if not ENABLE_PASSWORD_VALIDATION:
+        return True
+
+    # 1. Length check
+    if len(password) < 8:
+        raise Exception(ERROR_MESSAGES.PASSWORD_TOO_SHORT)
+
+    # 2. Complexity check (Letter, Number, Special)
+    has_letter = re.search(r"[a-zA-Z]", password)
+    has_number = re.search(r"\d", password)
+    has_special = re.search(r"[^\w\s]", password)
+
+    if not (has_letter and has_number and has_special):
+        raise Exception(ERROR_MESSAGES.PASSWORD_MISSING_CHARS)
+
+    # 3. Sequence check (4+ length)
+    for i in range(len(password) - 3):
+        # Forward sequence
+        if (
+            ord(password[i + 1]) == ord(password[i]) + 1
+            and ord(password[i + 2]) == ord(password[i]) + 2
+            and ord(password[i + 3]) == ord(password[i]) + 3
+        ):
+            # Check if alphanumeric
+            if password[i : i + 4].isalnum():
+                raise Exception(ERROR_MESSAGES.PASSWORD_SEQUENTIAL)
+
+        # Backward sequence
+        if (
+            ord(password[i + 1]) == ord(password[i]) - 1
+            and ord(password[i + 2]) == ord(password[i]) - 2
+            and ord(password[i + 3]) == ord(password[i]) - 3
+        ):
+            # Check if alphanumeric
+            if password[i : i + 4].isalnum():
+                raise Exception(ERROR_MESSAGES.PASSWORD_SEQUENTIAL)
+
+    # 4. Repetition check (4+ length)
+    for i in range(len(password) - 3):
+        if (
+            password[i] == password[i + 1]
+            == password[i + 2]
+            == password[i + 3]
+        ):
+             raise Exception(ERROR_MESSAGES.PASSWORD_REPETITIVE)
+
+    # 5. Common strings check
+    for blacklisted in PASSWORD_BLACKLIST:
+        if blacklisted.lower() in password.lower():
+            raise Exception(ERROR_MESSAGES.PASSWORD_COMMON)
+
+    # 6. Account info check
+    if user_data:
+        email = user_data.get("email", "").lower()
+        if email:
+             email_id = email.split("@")[0]
+             if email_id and email_id in password.lower():
+                 raise Exception(ERROR_MESSAGES.PASSWORD_CONTAINS_ACCOUNT_INFO)
+        
+        name = user_data.get("name", "").lower()
+        if name and name in password.lower():
+            raise Exception(ERROR_MESSAGES.PASSWORD_CONTAINS_ACCOUNT_INFO)
 
     return True
 
