@@ -112,12 +112,16 @@ class TikaLoader:
         endpoint = self.url
         if not endpoint.endswith("/"):
             endpoint += "/"
-        endpoint += "tika/text"
+        endpoint += "rmeta/text"
 
         r = requests.put(endpoint, data=data, headers=headers)
 
         if r.ok:
             raw_metadata = r.json()
+            # rmeta/text returns an array, take the first element
+            if isinstance(raw_metadata, list) and len(raw_metadata) > 0:
+                raw_metadata = raw_metadata[0]
+
             text = raw_metadata.get("X-TIKA:content", "<No text content found>").strip()
 
             if "Content-Type" in raw_metadata:
@@ -230,6 +234,7 @@ class Loader:
                 loader = TikaLoader(
                     url=self.kwargs.get("TIKA_SERVER_URL"),
                     file_path=file_path,
+                    mime_type=file_content_type,
                     extract_images=self.kwargs.get("PDF_EXTRACT_IMAGES"),
                 )
         elif (
