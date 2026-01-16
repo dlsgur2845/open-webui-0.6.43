@@ -19,8 +19,8 @@ ARG USE_TIKTOKEN_ENCODING_NAME="cl100k_base"
 
 ARG BUILD_HASH=dev-build
 # Override at your own risk - non-root configurations are untested
-ARG UID=0
-ARG GID=0
+ARG UID=1000
+ARG GID=1000
 
 ######## WebUI frontend ########
 FROM --platform=$BUILDPLATFORM node:22-alpine3.20 AS build
@@ -104,13 +104,13 @@ ENV HF_HOME="/app/backend/data/cache/embedding/models"
 
 WORKDIR /app/backend
 
-ENV HOME=/root
+ENV HOME=/home/appusr
 # Create user and group if not root
 RUN if [ $UID -ne 0 ]; then \
     if [ $GID -ne 0 ]; then \
-    addgroup --gid $GID app; \
+    addgroup --gid $GID appgrp; \
     fi; \
-    adduser --uid $UID --gid $GID --home $HOME --disabled-password --no-create-home app; \
+    adduser --uid $UID --gid $GID --home $HOME --disabled-password --gecos "" appusr; \
     fi
 
 RUN mkdir -p $HOME/.cache/chroma
@@ -152,7 +152,7 @@ RUN pip3 install --no-cache-dir uv && \
 
 # Install additional dependencies for documented parsing compatibility
 RUN pip3 install --no-cache-dir msoffcrypto-tool chardet nltk pyhwp && \
-    python3 -m nltk.downloader punkt punkt_tab
+    python3 -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
 
 # Install Ollama if requested
 RUN if [ "$USE_OLLAMA" = "true" ]; then \
@@ -183,10 +183,10 @@ HEALTHCHECK CMD curl --silent --fail http://localhost:${PORT:-8080}/health | jq 
 # - Directories are group-writable and have SGID so new files inherit GID 0
 RUN if [ "$USE_PERMISSION_HARDENING" = "true" ]; then \
     set -eux; \
-    chgrp -R 0 /app /root || true; \
-    chmod -R g+rwX /app /root || true; \
+    chgrp -R 0 /app $HOME || true; \
+    chmod -R g+rwX /app $HOME || true; \
     find /app -type d -exec chmod g+s {} + || true; \
-    find /root -type d -exec chmod g+s {} + || true; \
+    find $HOME -type d -exec chmod g+s {} + || true; \
     fi
 
 USER $UID:$GID
