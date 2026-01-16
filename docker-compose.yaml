@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ax/open-webui:0.6.43-fix2-MacSilicon
+    image: ax/open-webui:0.6.43-fix2-AppleSilicon
     container_name: open-webui
     volumes:
       - open-webui:/app/backend/data
