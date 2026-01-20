@@ -664,11 +664,11 @@ async def verify_connection(
                     if r.status != 200:
                         if isinstance(response_data, (dict, list)):
                             return JSONResponse(
-                                status_code=r.status, content=response_data
+                                status_code=400, content=response_data
                             )
                         else:
                             return PlainTextResponse(
-                                status_code=r.status, content=response_data
+                                status_code=400, content=response_data
                             )
 
                     return response_data
@@ -687,11 +687,11 @@ async def verify_connection(
                     if r.status != 200:
                         if isinstance(response_data, (dict, list)):
                             return JSONResponse(
-                                status_code=r.status, content=response_data
+                                status_code=400, content=response_data
                             )
                         else:
                             return PlainTextResponse(
-                                status_code=r.status, content=response_data
+                                status_code=400, content=response_data
                             )
 
                     return response_data

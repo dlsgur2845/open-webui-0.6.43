@@ -251,7 +251,7 @@ async def verify_connection(
 
                     if "error" in res:
                         detail = f"External Error: {res['error']}"
-                    raise Exception(detail)
+                    raise HTTPException(status_code=400, detail=detail)
 
                 data = await r.json()
                 return data
