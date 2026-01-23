@@ -744,7 +744,7 @@
 						const blob = await (await fetch(imageUrl)).blob();
 						const compressedFile = new File([blob], file.name, { type: file.type });
 
-						uploadFileHandler(compressedFile, false);
+						uploadFileHandler(compressedFile, true);
 					}
 				};
 

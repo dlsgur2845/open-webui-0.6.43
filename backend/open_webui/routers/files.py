@@ -128,7 +128,7 @@ def process_uploaded_file(request, file, file_path, file_item, file_metadata, us
                     user=user,
                 )
             elif (not file.content_type.startswith(("image/", "video/"))) or (
-                request.app.state.config.CONTENT_EXTRACTION_ENGINE == "external"
+                request.app.state.config.CONTENT_EXTRACTION_ENGINE in ["external", "tika"]
             ):
                 process_file(request, ProcessFileForm(file_id=file_item.id), user=user)
             else:
